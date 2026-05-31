@@ -506,7 +506,7 @@ function renderNoteCards(cards) {
   (cards || []).forEach((c, i) => {
     const card = document.createElement('div'); card.className = 'note-card';
     const del = document.createElement('button'); del.className = 'note-card-del'; del.textContent = '×'; del.onclick = () => removeNoteCard(i);
-    const ta = document.createElement('textarea'); ta.placeholder = 'Write a note…'; ta.value = c.text || ''; ta.oninput = () => markDirty();
+    const ta = document.createElement('textarea'); ta.placeholder = 'Write a note…'; ta.value = c.text || ''; ta.oninput = () => { c.text = ta.value; markDirty(); };
     card.appendChild(del); card.appendChild(ta);
     grid.appendChild(card);
   });
@@ -802,12 +802,7 @@ async function saveDetail(silent) {
   item.name = document.getElementById('detailTitle').value || 'Untitled';
   item.status = document.getElementById('detailStatus').value;
 
-  // update existing cards from DOM only if cards are rendered
-  const cardTas = Array.from(document.getElementById('notesGrid').querySelectorAll('.note-card textarea'));
-  if (cardTas.length === (item.noteCards || []).length) {
-    cardTas.forEach((ta, i) => { if (item.noteCards[i]) item.noteCards[i].text = ta.value; });
-  }
-  // snapshot textarea into a new card if it has text
+  // snapshot textarea into a new card if it has text — never read cards from DOM
   const notesTa = document.getElementById('detailNotes');
   if (notesTa && notesTa.value.trim()) {
     item.noteCards = item.noteCards || [];
