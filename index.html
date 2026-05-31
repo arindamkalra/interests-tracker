@@ -339,7 +339,13 @@ async function load() {
   renderList();
   // restore last selected interest
   const lastId = localStorage.getItem('lastSelectedId');
-  if (lastId && data.find(d => d.id === lastId)) selectInterest(lastId);
+  if (lastId && data.find(d => d.id === lastId)) {
+    await selectInterest(lastId);
+    setTimeout(() => {
+      const item = data.find(d => d.id === lastId);
+      if (item) renderNoteCards(item.noteCards || []);
+    }, 100);
+  }
 }
 
 // ── HELPERS ───────────────────────────────────────────
