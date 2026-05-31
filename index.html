@@ -337,6 +337,9 @@ async function load() {
   if (!saved || !saved.length) await dbSave(data);
   document.getElementById('emptyState').innerHTML = '<div class="icon">✦</div><p>Select an interest or add a new one</p>';
   renderList();
+  // restore last selected interest
+  const lastId = localStorage.getItem('lastSelectedId');
+  if (lastId && data.find(d => d.id === lastId)) selectInterest(lastId);
 }
 
 // ── HELPERS ───────────────────────────────────────────
@@ -409,6 +412,7 @@ function goBack() {
 async function selectInterest(id) {
   if (dirty && selectedId) await saveDetail(true);
   selectedId = id; dirty = false;
+  localStorage.setItem('lastSelectedId', id);
   renderList();
   const item = getSelected(); if (!item) return;
 
