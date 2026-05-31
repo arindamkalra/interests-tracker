@@ -151,6 +151,7 @@
 
 <header>
   <h1>🗂 Interests</h1>
+  <span id="syncStatus" style="font-size:12px;color:#aaa;margin-left:auto;"></span>
 </header>
 
 <div class="app">
@@ -222,14 +223,43 @@
 </div>
 
 <script>
-const STORAGE_KEY = 'interests_v1';
+const SUPABASE_URL = 'https://dvwdiqfkbooazvdjuzxg.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR2d2RpcWZrYm9vYXp2ZGp1enhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxOTQ3NjAsImV4cCI6MjA5NTc3MDc2MH0.sExMY6IZzJGcdtP-JKQJMkiSgqkuizMwE5nKNog6QOo';
+const USER_ID = 'arindam'; // single user for now
+const RECORD_ID = 'main';
+
 let data = [];
 let selectedId = null;
 let dirty = false;
 
-function load() {
-  try { data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { data = []; }
-  if (data.length === 0) {
+async function dbGet() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/interests?id=eq.${RECORD_ID}&user_id=eq.${USER_ID}`, {
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+  });
+  const rows = await res.json();
+  return rows[0]?.data || null;
+}
+
+async function dbSave(data) {
+  await fetch(`${SUPABASE_URL}/rest/v1/interests`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'resolution=merge-duplicates'
+    },
+    body: JSON.stringify({ id: RECORD_ID, user_id: USER_ID, data, updated_at: new Date().toISOString() })
+  });
+}
+
+async function load() {
+  document.getElementById('emptyState').innerHTML = '<div class="icon">⏳</div><p>Loading…</p>';
+  document.getElementById('emptyState').style.display = 'flex';
+  const saved = await dbGet();
+  if (saved && saved.length > 0) {
+    data = saved;
+  } else {
     data = [
       { id: uid(), name: 'Cooking', status: 'next', nextItems: [], notes: '', resources: [] },
       { id: uid(), name: 'Baking', status: 'next', nextItems: [], notes: '', resources: [] },
@@ -237,12 +267,13 @@ function load() {
       { id: uid(), name: 'Pottery', status: 'next', nextItems: [], notes: '', resources: [] },
       { id: uid(), name: 'Hiking', status: 'next', nextItems: [], notes: '', resources: [] },
     ];
-    save();
+    await dbSave(data);
   }
+  document.getElementById('emptyState').innerHTML = '<div class="icon">✦</div><p>Select an interest or add a new one</p>';
   renderList();
 }
 
-function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+function save() { dbSave(data); }
 
 function uid() { return Math.random().toString(36).slice(2, 10); }
 
@@ -494,7 +525,11 @@ function saveDetail(silent) {
     proj.nextItems = Array.from(projNextRows).map((row, i) => ({ id: proj.nextItems[i]?.id || uid(), text: row.querySelector('input[type=text]').value }));
   });
 
-  save();
+  const sync = document.getElementById('syncStatus');
+  sync.textContent = 'Saving…';
+  await dbSave(data);
+  sync.textContent = 'Synced ✓';
+  setTimeout(() => sync.textContent = '', 2000);
   dirty = false;
   renderList();
   if (!silent) {
