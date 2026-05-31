@@ -434,10 +434,10 @@ async function selectInterest(id) {
   document.getElementById('detailNotes').value = '';
   renderNextItems(item.nextItems || []);
   renderDoneItems(item.doneItems || []);
-  renderNoteCards(item.noteCards || []);
   renderLinks(item.links || []);
   renderProjects(item.projects || []);
   switchTab('notes');
+  renderNoteCards(item.noteCards || []);
 }
 
 // ── TABS ──────────────────────────────────────────────
