@@ -400,8 +400,8 @@ function goBack() {
 }
 
 // ── SELECT INTEREST ───────────────────────────────────
-function selectInterest(id) {
-  if (dirty && selectedId) saveDetail(true);
+async function selectInterest(id) {
+  if (dirty && selectedId) await saveDetail(true);
   selectedId = id; dirty = false;
   renderList();
   const item = getSelected(); if (!item) return;
@@ -540,7 +540,7 @@ function handleNotesInput() {
       item.links.push({ id: uid(), url: clean, title: '' }); changed = true;
     }
   });
-  ta.value = text.replace(URL_REGEX(), '').replace(/\n{3,}/g, '\n\n').trimEnd();
+  // keep URLs in the textarea (don't strip them)
   if (changed) { save(); renderLinks(item.links); }
   markDirty();
 }
