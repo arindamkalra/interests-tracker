@@ -538,7 +538,6 @@ function removeNoteCard(i) {
   item.noteCards.splice(i, 1); save(); renderNoteCards(item.noteCards);
 }
 
-const URL_REGEX = /https?:\/\/[^\s"'<>]+/g;
 function handleNotesInput() {
   const ta = document.getElementById('detailNotes');
   const text = ta.value;
