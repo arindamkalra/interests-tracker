@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interests</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f7f7f5; color: #1a1a1a; height: 100vh; display: flex; flex-direction: column; }
+
+  header { padding: 16px 24px; background: #fff; border-bottom: 1px solid #e5e5e5; display: flex; align-items: center; gap: 12px; }
+  header h1 { font-size: 18px; font-weight: 600; }
+
+  .app { display: flex; flex: 1; overflow: hidden; }
+
+  /* LEFT PANEL */
+  .left { width: 300px; min-width: 300px; background: #fff; border-right: 1px solid #e5e5e5; display: flex; flex-direction: column; }
+  .left-header { padding: 16px; border-bottom: 1px solid #e5e5e5; display: flex; justify-content: space-between; align-items: center; }
+  .left-header span { font-size: 13px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.05em; }
+  .add-btn { background: #1a1a1a; color: #fff; border: none; border-radius: 6px; padding: 6px 12px; font-size: 13px; cursor: pointer; }
+  .add-btn:hover { background: #333; }
+
+  .interest-list { flex: 1; overflow-y: auto; padding: 8px; }
+  .interest-item { padding: 10px 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; margin-bottom: 2px; border: 1px solid transparent; user-select: none; }
+  .interest-item:hover { background: #f7f7f5; }
+  .interest-item.active { background: #f0efeb; border-color: #d9d9d4; }
+  .interest-item .drag-handle { color: #ccc; font-size: 12px; cursor: grab; }
+  .interest-item .drag-handle:active { cursor: grabbing; }
+  .interest-item .name { flex: 1; font-size: 14px; font-weight: 500; }
+  .interest-item .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .status-dot.active { background: #22c55e; }
+  .status-dot.next { background: #f59e0b; }
+  .status-dot.someday { background: #94a3b8; }
+  .status-dot.archived { background: #e5e5e5; }
+
+  .interest-item .del-btn { opacity: 0; background: none; border: none; color: #999; cursor: pointer; font-size: 16px; padding: 0 2px; }
+  .interest-item:hover .del-btn { opacity: 1; }
+  .interest-item .del-btn:hover { color: #e53e3e; }
+
+  /* RIGHT PANEL */
+  .right { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #999; gap: 8px; }
+  .empty-state .icon { font-size: 40px; }
+  .empty-state p { font-size: 14px; }
+
+  .detail { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 28px 32px; gap: 20px; }
+  .detail-title-row { display: flex; align-items: center; gap: 12px; }
+  .detail-title { font-size: 22px; font-weight: 700; border: none; background: none; outline: none; flex: 1; color: #1a1a1a; }
+  .detail-title:focus { border-bottom: 2px solid #1a1a1a; }
+
+  .status-select { font-size: 12px; font-weight: 600; border: 1px solid #e5e5e5; border-radius: 20px; padding: 4px 12px; background: #fff; cursor: pointer; outline: none; color: #555; }
+
+  .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #999; margin-bottom: 6px; }
+
+  .next-list { display: flex; flex-direction: column; gap: 6px; }
+  .next-item { display: flex; align-items: center; gap: 8px; }
+  .next-item input[type="checkbox"] { accent-color: #1a1a1a; width: 15px; height: 15px; cursor: pointer; flex-shrink: 0; }
+  .next-item input[type="text"] { flex: 1; border: none; background: none; outline: none; font-size: 14px; color: #1a1a1a; }
+  .next-item input[type="text"]:focus { border-bottom: 1px solid #ccc; }
+  .next-item input[type="text"].done { text-decoration: line-through; color: #aaa; }
+  .next-item .rm { background: none; border: none; color: #ccc; cursor: pointer; font-size: 16px; padding: 0; opacity: 0; }
+  .next-item:hover .rm { opacity: 1; }
+  .next-item .rm:hover { color: #e53e3e; }
+  .add-next { background: none; border: none; color: #999; font-size: 13px; cursor: pointer; padding: 2px 0; text-align: left; margin-top: 2px; }
+  .add-next:hover { color: #1a1a1a; }
+
+  .done-section { border-top: 1px solid #f0f0f0; margin-top: 6px; padding-top: 8px; }
+  .done-toggle { background: none; border: none; color: #aaa; font-size: 12px; cursor: pointer; padding: 0; display: flex; align-items: center; gap: 4px; }
+  .done-toggle:hover { color: #666; }
+  .done-list { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+  .done-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #aaa; padding: 2px 0; }
+  .done-item .done-text { flex: 1; text-decoration: line-through; }
+  .done-item .done-date { font-size: 11px; color: #ccc; white-space: nowrap; }
+  .done-item .undo-btn { background: none; border: none; color: #ccc; cursor: pointer; font-size: 11px; opacity: 0; }
+  .done-item:hover .undo-btn { opacity: 1; }
+  .done-item .undo-btn:hover { color: #666; }
+
+  .notes-area { flex: 1; border: 1px solid #e5e5e5; border-radius: 10px; padding: 14px; font-size: 14px; line-height: 1.6; resize: none; outline: none; background: #fff; color: #1a1a1a; font-family: inherit; min-height: 120px; }
+  .notes-area:focus { border-color: #aaa; }
+
+  .resources-list { display: flex; flex-direction: column; gap: 6px; }
+  .resource-item { display: flex; align-items: center; gap: 8px; }
+  .resource-item input { flex: 1; border: none; border-bottom: 1px solid #e5e5e5; background: none; outline: none; font-size: 13px; color: #1a1a1a; padding: 3px 0; }
+  .resource-item input:focus { border-bottom-color: #aaa; }
+  .resource-item a { font-size: 13px; color: #2563eb; text-decoration: none; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .resource-item a:hover { text-decoration: underline; }
+  .resource-item .rm { background: none; border: none; color: #ccc; cursor: pointer; font-size: 16px; padding: 0; opacity: 0; }
+  .resource-item:hover .rm { opacity: 1; }
+  .resource-item .rm:hover { color: #e53e3e; }
+  .add-res { background: none; border: none; color: #999; font-size: 13px; cursor: pointer; padding: 2px 0; text-align: left; margin-top: 2px; }
+  .add-res:hover { color: #1a1a1a; }
+
+  .save-bar { display: flex; justify-content: flex-end; padding-top: 8px; }
+  .save-btn { background: #1a1a1a; color: #fff; border: none; border-radius: 8px; padding: 8px 20px; font-size: 14px; cursor: pointer; }
+  .save-btn:hover { background: #333; }
+  .saved-msg { font-size: 13px; color: #22c55e; align-self: center; margin-right: 12px; opacity: 0; transition: opacity 0.3s; }
+  .saved-msg.show { opacity: 1; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid #e5e5e5; margin-bottom: 4px; }
+  .tab-btn { background: none; border: none; border-bottom: 2px solid transparent; padding: 10px 18px; font-size: 13px; font-weight: 600; color: #999; cursor: pointer; margin-bottom: -1px; }
+  .tab-btn.active { color: #1a1a1a; border-bottom-color: #1a1a1a; }
+  .tab-btn:hover:not(.active) { color: #555; }
+  .tab-pane { display: none; flex: 1; flex-direction: column; gap: 20px; overflow-y: auto; }
+  .tab-pane.active { display: flex; }
+
+  /* PROJECTS */
+  .projects-list { display: flex; flex-direction: column; gap: 8px; }
+  .project-card { border: 1px solid #e5e5e5; border-radius: 10px; background: #fff; overflow: hidden; }
+  .project-header { display: flex; align-items: center; gap: 8px; padding: 10px 14px; cursor: pointer; background: #fafaf9; }
+  .project-header:hover { background: #f0efeb; }
+  .project-chevron { color: #aaa; font-size: 11px; transition: transform 0.2s; }
+  .project-chevron.open { transform: rotate(90deg); }
+  .project-name-input { flex: 1; border: none; background: none; font-size: 14px; font-weight: 600; outline: none; color: #1a1a1a; cursor: text; }
+  .project-del { background: none; border: none; color: #ccc; cursor: pointer; font-size: 16px; opacity: 0; }
+  .project-header:hover .project-del { opacity: 1; }
+  .project-del:hover { color: #e53e3e; }
+  .project-body { display: none; padding: 14px; border-top: 1px solid #e5e5e5; flex-direction: column; gap: 14px; }
+  .project-body.open { display: flex; }
+  .add-project-btn { background: none; border: 1px dashed #d0d0d0; border-radius: 8px; color: #999; font-size: 13px; cursor: pointer; padding: 8px; width: 100%; text-align: center; }
+  .add-project-btn:hover { border-color: #aaa; color: #555; }
+
+  /* project inner next/done mirrors main styles but smaller */
+  .proj-next-list { display: flex; flex-direction: column; gap: 5px; }
+  .proj-next-item { display: flex; align-items: center; gap: 8px; }
+  .proj-next-item input[type=checkbox] { accent-color: #1a1a1a; width: 14px; height: 14px; flex-shrink: 0; }
+  .proj-next-item input[type=text] { flex: 1; border: none; background: none; outline: none; font-size: 13px; color: #1a1a1a; }
+  .proj-next-item input[type=text]:focus { border-bottom: 1px solid #ccc; }
+  .proj-next-item .rm { background: none; border: none; color: #ccc; cursor: pointer; font-size: 15px; padding: 0; opacity: 0; }
+  .proj-next-item:hover .rm { opacity: 1; }
+  .proj-done-section { border-top: 1px solid #f0f0f0; margin-top: 4px; padding-top: 6px; }
+  .proj-done-toggle { background: none; border: none; color: #bbb; font-size: 11px; cursor: pointer; }
+  .proj-done-list { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; }
+  .proj-done-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #bbb; }
+  .proj-done-item .done-text { flex: 1; text-decoration: line-through; }
+  .proj-done-item .done-date { font-size: 10px; color: #d0d0d0; }
+  .proj-done-item .undo-btn { background: none; border: none; color: #ccc; cursor: pointer; font-size: 10px; opacity: 0; }
+  .proj-done-item:hover .undo-btn { opacity: 1; }
+  .proj-notes { width: 100%; border: 1px solid #e5e5e5; border-radius: 8px; padding: 10px; font-size: 13px; line-height: 1.5; resize: none; outline: none; background: #fff; font-family: inherit; min-height: 80px; }
+  .proj-notes:focus { border-color: #aaa; }
+  .proj-res-list { display: flex; flex-direction: column; gap: 5px; }
+  .proj-res-item { display: flex; align-items: center; gap: 8px; }
+  .proj-res-item input { flex: 1; border: none; border-bottom: 1px solid #e5e5e5; background: none; outline: none; font-size: 12px; color: #1a1a1a; padding: 2px 0; }
+  .proj-res-item a { font-size: 12px; color: #2563eb; text-decoration: none; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .proj-res-item a:hover { text-decoration: underline; }
+  .proj-res-item .rm { background: none; border: none; color: #ccc; cursor: pointer; font-size: 15px; padding: 0; opacity: 0; }
+  .proj-res-item:hover .rm { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🗂 Interests</h1>
+</header>
+
+<div class="app">
+  <!-- LEFT -->
+  <div class="left">
+    <div class="left-header">
+      <span>All Interests</span>
+      <button class="add-btn" onclick="addInterest()">+ Add</button>
+    </div>
+    <div class="interest-list" id="interestList"></div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right" id="rightPanel">
+    <div class="empty-state" id="emptyState">
+      <div class="icon">✦</div>
+      <p>Select an interest or add a new one</p>
+    </div>
+    <div class="detail" id="detailPanel" style="display:none;">
+      <div class="detail-title-row">
+        <input class="detail-title" id="detailTitle" type="text" placeholder="Interest name" oninput="markDirty()">
+        <select class="status-select" id="detailStatus" onchange="markDirty(); renderList()">
+          <option value="next">🟡 Up Next</option>
+          <option value="active">🟢 Active</option>
+          <option value="someday">⚪ Someday</option>
+          <option value="archived">🔘 Archived</option>
+        </select>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('general')">General</button>
+        <button class="tab-btn" onclick="switchTab('projects')">Projects</button>
+      </div>
+
+      <!-- GENERAL TAB -->
+      <div class="tab-pane active" id="tab-general">
+        <div>
+          <div class="section-label">Next things to do</div>
+          <div class="next-list" id="nextList"></div>
+          <button class="add-next" onclick="addNextItem()">+ Add item</button>
+          <div class="done-section" id="doneSection" style="display:none;">
+            <button class="done-toggle" onclick="toggleDoneVisible()" id="doneToggle">▶ Done (<span id="doneCount">0</span>)</button>
+            <div class="done-list" id="doneList" style="display:none;"></div>
+          </div>
+        </div>
+        <div>
+          <div class="section-label">Notes</div>
+          <textarea class="notes-area" id="detailNotes" placeholder="Jot down anything useful — what you learned, where you left off, ideas… Paste a link and it'll move to Resources automatically." oninput="handleNotesInput()"></textarea>
+        </div>
+        <div>
+          <div class="section-label">Resources & Links</div>
+          <div class="resources-list" id="resourcesList"></div>
+          <button class="add-res" onclick="addResource()">+ Add link or resource</button>
+        </div>
+      </div>
+
+      <!-- PROJECTS TAB -->
+      <div class="tab-pane" id="tab-projects">
+        <div class="projects-list" id="projectsList"></div>
+        <button class="add-project-btn" onclick="addProject()">+ New project</button>
+      </div>
+
+      <div class="save-bar">
+        <span class="saved-msg" id="savedMsg">Saved ✓</span>
+        <button class="save-btn" onclick="saveDetail()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'interests_v1';
+let data = [];
+let selectedId = null;
+let dirty = false;
+
+function load() {
+  try { data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { data = []; }
+  if (data.length === 0) {
+    data = [
+      { id: uid(), name: 'Cooking', status: 'next', nextItems: [], notes: '', resources: [] },
+      { id: uid(), name: 'Baking', status: 'next', nextItems: [], notes: '', resources: [] },
+      { id: uid(), name: 'Embroidery', status: 'next', nextItems: [], notes: '', resources: [] },
+      { id: uid(), name: 'Pottery', status: 'next', nextItems: [], notes: '', resources: [] },
+      { id: uid(), name: 'Hiking', status: 'next', nextItems: [], notes: '', resources: [] },
+    ];
+    save();
+  }
+  renderList();
+}
+
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+function uid() { return Math.random().toString(36).slice(2, 10); }
+
+function getSelected() { return data.find(d => d.id === selectedId); }
+
+function renderList() {
+  const list = document.getElementById('interestList');
+  const statusOrder = { active: 0, next: 1, someday: 2, archived: 3 };
+  const sorted = [...data].sort((a, b) => statusOrder[a.status] - statusOrder[b.status]);
+  list.innerHTML = '';
+  sorted.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'interest-item' + (item.id === selectedId ? ' active' : '');
+    div.dataset.id = item.id;
+    div.innerHTML = `
+      <span class="drag-handle">⠿</span>
+      <span class="status-dot ${item.status}"></span>
+      <span class="name">${escHtml(item.name)}</span>
+      <button class="del-btn" title="Delete" onclick="deleteInterest('${item.id}', event)">×</button>
+    `;
+    div.addEventListener('click', () => selectInterest(item.id));
+    list.appendChild(div);
+  });
+}
+
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function selectInterest(id) {
+  if (dirty && selectedId) saveDetail(true);
+  selectedId = id;
+  dirty = false;
+  renderList();
+  const item = getSelected();
+  if (!item) return;
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('detailPanel').style.display = 'flex';
+  document.getElementById('detailTitle').value = item.name;
+  document.getElementById('detailStatus').value = item.status;
+  document.getElementById('detailNotes').value = item.notes || '';
+  renderNextItems(item.nextItems || []);
+  renderDoneItems(item.doneItems || []);
+  renderResources(item.resources || []);
+  renderProjects(item.projects || []);
+  switchTab('general');
+}
+
+function renderNextItems(items) {
+  const list = document.getElementById('nextList');
+  list.innerHTML = '';
+  items.forEach((ni, i) => {
+    const row = document.createElement('div');
+    row.className = 'next-item';
+    row.innerHTML = `
+      <input type="checkbox" onchange="completeNext(${i})">
+      <input type="text" value="${escHtml(ni.text)}" placeholder="Next action…" oninput="markDirty()" onchange="markDirty()">
+      <button class="rm" onclick="removeNext(${i})">×</button>
+    `;
+    list.appendChild(row);
+  });
+}
+
+function renderDoneItems(items) {
+  const section = document.getElementById('doneSection');
+  const list = document.getElementById('doneList');
+  const count = document.getElementById('doneCount');
+  if (!items || items.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  count.textContent = items.length;
+  list.innerHTML = '';
+  [...items].reverse().forEach((di, ri) => {
+    const i = items.length - 1 - ri;
+    const row = document.createElement('div');
+    row.className = 'done-item';
+    row.innerHTML = `
+      <span>✓</span>
+      <span class="done-text">${escHtml(di.text)}</span>
+      <span class="done-date">${di.date}</span>
+      <button class="undo-btn" onclick="undoDone(${i})">↩ undo</button>
+    `;
+    list.appendChild(row);
+  });
+}
+
+let doneVisible = false;
+function toggleDoneVisible() {
+  doneVisible = !doneVisible;
+  document.getElementById('doneList').style.display = doneVisible ? 'flex' : 'none';
+  document.getElementById('doneToggle').innerHTML = `${doneVisible ? '▼' : '▶'} Done (<span id="doneCount">${(getSelected()?.doneItems||[]).length}</span>)`;
+}
+
+function completeNext(i) {
+  const item = getSelected(); if (!item) return;
+  const nextInputs = document.getElementById('nextList').querySelectorAll('.next-item input[type=text]');
+  const text = nextInputs[i]?.value || item.nextItems[i]?.text || '';
+  item.doneItems = item.doneItems || [];
+  item.doneItems.push({ text, date: new Date().toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) });
+  item.nextItems.splice(i, 1);
+  save();
+  renderNextItems(item.nextItems);
+  renderDoneItems(item.doneItems);
+  if (doneVisible) document.getElementById('doneList').style.display = 'flex';
+}
+
+function undoDone(i) {
+  const item = getSelected(); if (!item) return;
+  const done = item.doneItems.splice(i, 1)[0];
+  item.nextItems.push({ id: uid(), text: done.text });
+  save();
+  renderNextItems(item.nextItems);
+  renderDoneItems(item.doneItems);
+  if (doneVisible) document.getElementById('doneList').style.display = 'flex';
+}
+
+function renderResources(resources) {
+  const list = document.getElementById('resourcesList');
+  list.innerHTML = '';
+  resources.forEach((r, i) => {
+    const row = document.createElement('div');
+    row.className = 'resource-item';
+    const isUrl = r.startsWith('http');
+    row.innerHTML = `
+      ${isUrl ? `<a href="${escHtml(r)}" target="_blank" title="${escHtml(r)}">${escHtml(r)}</a>` : `<input type="text" value="${escHtml(r)}" placeholder="Link or resource…" oninput="markDirty()">`}
+      <button class="rm" onclick="removeResource(${i})">×</button>
+    `;
+    list.appendChild(row);
+  });
+}
+
+function addInterest() {
+  const item = { id: uid(), name: 'New Interest', status: 'next', nextItems: [], notes: '', resources: [] };
+  data.unshift(item);
+  save();
+  selectInterest(item.id);
+  setTimeout(() => { const t = document.getElementById('detailTitle'); t.focus(); t.select(); }, 50);
+}
+
+function deleteInterest(id, e) {
+  e.stopPropagation();
+  if (!confirm('Delete this interest?')) return;
+  data = data.filter(d => d.id !== id);
+  if (selectedId === id) {
+    selectedId = null;
+    document.getElementById('emptyState').style.display = 'flex';
+    document.getElementById('detailPanel').style.display = 'none';
+  }
+  save();
+  renderList();
+}
+
+function addNextItem() {
+  const item = getSelected();
+  if (!item) return;
+  item.nextItems = item.nextItems || [];
+  item.nextItems.push({ id: uid(), text: '', done: false });
+  save();
+  renderNextItems(item.nextItems);
+  const inputs = document.getElementById('nextList').querySelectorAll('input[type=text]');
+  if (inputs.length) inputs[inputs.length - 1].focus();
+}
+
+function removeNext(i) {
+  const item = getSelected(); if (!item) return;
+  item.nextItems.splice(i, 1);
+  renderNextItems(item.nextItems);
+  markDirty();
+}
+
+function addResource() {
+  const item = getSelected(); if (!item) return;
+  item.resources = item.resources || [];
+  item.resources.push('');
+  save();
+  renderResources(item.resources);
+  const inputs = document.getElementById('resourcesList').querySelectorAll('input[type=text]');
+  if (inputs.length) inputs[inputs.length - 1].focus();
+}
+
+function removeResource(i) {
+  const item = getSelected(); if (!item) return;
+  item.resources.splice(i, 1);
+  renderResources(item.resources);
+  markDirty();
+}
+
+function markDirty() { dirty = true; }
+
+const URL_REGEX = /https?:\/\/[^\s"'<>]+/g;
+
+function handleNotesInput() {
+  const ta = document.getElementById('detailNotes');
+  const text = ta.value;
+  const urls = text.match(URL_REGEX);
+  if (!urls) { markDirty(); return; }
+
+  const item = getSelected(); if (!item) { markDirty(); return; }
+  item.resources = item.resources || [];
+
+  // add any new URLs to resources (avoid duplicates)
+  let changed = false;
+  urls.forEach(url => {
+    const clean = url.replace(/[),.\]]+$/, ''); // strip trailing punctuation
+    if (!item.resources.includes(clean)) {
+      item.resources.push(clean);
+      changed = true;
+    }
+  });
+
+  // strip URLs from notes text
+  ta.value = text.replace(URL_REGEX, '').replace(/\n{3,}/g, '\n\n').trimEnd();
+
+  if (changed) {
+    save();
+    renderResources(item.resources);
+  }
+  markDirty();
+}
+
+function saveDetail(silent) {
+  const item = getSelected(); if (!item) return;
+  item.name = document.getElementById('detailTitle').value || 'Untitled';
+  item.status = document.getElementById('detailStatus').value;
+  item.notes = document.getElementById('detailNotes').value;
+
+  // collect next items (doneItems managed separately via completeNext/undoDone)
+  const nextInputs = document.getElementById('nextList').querySelectorAll('.next-item');
+  item.nextItems = Array.from(nextInputs).map((row, i) => ({
+    id: item.nextItems[i]?.id || uid(),
+    text: row.querySelector('input[type=text]').value
+  }));
+
+  // collect resources
+  const resInputs = document.getElementById('resourcesList').querySelectorAll('input[type=text]');
+  const resLinks = document.getElementById('resourcesList').querySelectorAll('a');
+  const existingLinks = Array.from(resLinks).map(a => a.href);
+  const typedLinks = Array.from(resInputs).map(i => i.value).filter(v => v.trim());
+  item.resources = [...existingLinks, ...typedLinks];
+
+  // collect projects
+  const cards = document.getElementById('projectsList').querySelectorAll('.project-card');
+  (item.projects || []).forEach((proj, pi) => {
+    const nameInput = cards[pi]?.querySelector('.project-name-input');
+    if (nameInput) proj.name = nameInput.value;
+    const notesEl = document.getElementById(`proj-notes-${pi}`);
+    if (notesEl) proj.notes = notesEl.value;
+    const projResInputs = document.getElementById(`proj-res-${pi}`)?.querySelectorAll('input[type=text]') || [];
+    const projResLinks = document.getElementById(`proj-res-${pi}`)?.querySelectorAll('a') || [];
+    proj.resources = [...Array.from(projResLinks).map(a => a.href), ...Array.from(projResInputs).map(i => i.value).filter(v => v.trim())];
+    const projNextRows = document.getElementById(`proj-next-${pi}`)?.querySelectorAll('.proj-next-item') || [];
+    proj.nextItems = Array.from(projNextRows).map((row, i) => ({ id: proj.nextItems[i]?.id || uid(), text: row.querySelector('input[type=text]').value }));
+  });
+
+  save();
+  dirty = false;
+  renderList();
+  if (!silent) {
+    const msg = document.getElementById('savedMsg');
+    msg.classList.add('show');
+    setTimeout(() => msg.classList.remove('show'), 2000);
+  }
+}
+
+// ── TABS ──────────────────────────────────────────────
+let activeTab = 'general';
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase() === tab));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === 'tab-' + tab));
+}
+
+// ── PROJECTS ──────────────────────────────────────────
+function renderProjects(projects) {
+  const list = document.getElementById('projectsList');
+  list.innerHTML = '';
+  (projects || []).forEach((proj, pi) => {
+    const card = document.createElement('div');
+    card.className = 'project-card';
+    card.innerHTML = `
+      <div class="project-header" onclick="toggleProject(${pi})">
+        <span class="project-chevron" id="proj-chev-${pi}">▶</span>
+        <input class="project-name-input" value="${escHtml(proj.name)}" placeholder="Project name" onclick="event.stopPropagation()" oninput="markDirty()">
+        <button class="project-del" onclick="deleteProject(${pi}, event)">×</button>
+      </div>
+      <div class="project-body" id="proj-body-${pi}">
+        <div>
+          <div class="section-label">Next things to do</div>
+          <div class="proj-next-list" id="proj-next-${pi}"></div>
+          <button class="add-next" onclick="addProjNext(${pi})" style="font-size:12px;">+ Add item</button>
+          <div class="proj-done-section" id="proj-done-sec-${pi}" style="display:none;">
+            <button class="proj-done-toggle" onclick="toggleProjDone(${pi})" id="proj-done-tog-${pi}">▶ Done (<span id="proj-done-count-${pi}">0</span>)</button>
+            <div class="proj-done-list" id="proj-done-list-${pi}" style="display:none;"></div>
+          </div>
+        </div>
+        <div>
+          <div class="section-label">Notes</div>
+          <textarea class="proj-notes" id="proj-notes-${pi}" placeholder="Notes for this project… paste a link to save it to resources." oninput="handleProjNotesInput(${pi})">${escHtml(proj.notes || '')}</textarea>
+        </div>
+        <div>
+          <div class="section-label">Resources & Links</div>
+          <div class="proj-res-list" id="proj-res-${pi}"></div>
+          <button class="add-next" onclick="addProjResource(${pi})" style="font-size:12px;">+ Add link</button>
+        </div>
+      </div>
+    `;
+    list.appendChild(card);
+    renderProjNextItems(pi, proj.nextItems || []);
+    renderProjDoneItems(pi, proj.doneItems || []);
+    renderProjResources(pi, proj.resources || []);
+  });
+}
+
+const projDoneVisible = {};
+function toggleProject(pi) {
+  const body = document.getElementById(`proj-body-${pi}`);
+  const chev = document.getElementById(`proj-chev-${pi}`);
+  const open = body.classList.toggle('open');
+  chev.classList.toggle('open', open);
+}
+
+function addProject() {
+  const item = getSelected(); if (!item) return;
+  item.projects = item.projects || [];
+  item.projects.push({ id: uid(), name: 'New Project', nextItems: [], doneItems: [], notes: '', resources: [] });
+  save();
+  renderProjects(item.projects);
+  // open the new one
+  const pi = item.projects.length - 1;
+  setTimeout(() => { toggleProject(pi); document.getElementById(`proj-body-${pi}`)?.querySelector('.project-name-input')?.select(); }, 50);
+}
+
+function deleteProject(pi, e) {
+  e.stopPropagation();
+  const item = getSelected(); if (!item) return;
+  if (!confirm('Delete this project?')) return;
+  item.projects.splice(pi, 1);
+  save();
+  renderProjects(item.projects);
+}
+
+function renderProjNextItems(pi, items) {
+  const list = document.getElementById(`proj-next-${pi}`);
+  if (!list) return;
+  list.innerHTML = '';
+  items.forEach((ni, i) => {
+    const row = document.createElement('div');
+    row.className = 'proj-next-item';
+    row.innerHTML = `
+      <input type="checkbox" onchange="completeProjNext(${pi}, ${i})">
+      <input type="text" value="${escHtml(ni.text)}" placeholder="Next action…" oninput="markDirty()">
+      <button class="rm" onclick="removeProjNext(${pi}, ${i})">×</button>
+    `;
+    list.appendChild(row);
+  });
+}
+
+function renderProjDoneItems(pi, items) {
+  const sec = document.getElementById(`proj-done-sec-${pi}`);
+  const list = document.getElementById(`proj-done-list-${pi}`);
+  const count = document.getElementById(`proj-done-count-${pi}`);
+  if (!sec) return;
+  if (!items || items.length === 0) { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+  count.textContent = items.length;
+  list.innerHTML = '';
+  [...items].reverse().forEach((di, ri) => {
+    const i = items.length - 1 - ri;
+    const row = document.createElement('div');
+    row.className = 'proj-done-item';
+    row.innerHTML = `<span>✓</span><span class="done-text">${escHtml(di.text)}</span><span class="done-date">${di.date}</span><button class="undo-btn" onclick="undoProjDone(${pi}, ${i})">↩</button>`;
+    list.appendChild(row);
+  });
+}
+
+function toggleProjDone(pi) {
+  projDoneVisible[pi] = !projDoneVisible[pi];
+  const list = document.getElementById(`proj-done-list-${pi}`);
+  const item = getSelected();
+  const count = (item?.projects?.[pi]?.doneItems || []).length;
+  list.style.display = projDoneVisible[pi] ? 'flex' : 'none';
+  document.getElementById(`proj-done-tog-${pi}`).innerHTML = `${projDoneVisible[pi] ? '▼' : '▶'} Done (<span id="proj-done-count-${pi}">${count}</span>)`;
+}
+
+function addProjNext(pi) {
+  const item = getSelected(); if (!item) return;
+  item.projects[pi].nextItems = item.projects[pi].nextItems || [];
+  item.projects[pi].nextItems.push({ id: uid(), text: '' });
+  save();
+  renderProjNextItems(pi, item.projects[pi].nextItems);
+  const inputs = document.getElementById(`proj-next-${pi}`).querySelectorAll('input[type=text]');
+  if (inputs.length) inputs[inputs.length - 1].focus();
+}
+
+function completeProjNext(pi, i) {
+  const item = getSelected(); if (!item) return;
+  const inputs = document.getElementById(`proj-next-${pi}`).querySelectorAll('.proj-next-item input[type=text]');
+  const text = inputs[i]?.value || item.projects[pi].nextItems[i]?.text || '';
+  item.projects[pi].doneItems = item.projects[pi].doneItems || [];
+  item.projects[pi].doneItems.push({ text, date: new Date().toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) });
+  item.projects[pi].nextItems.splice(i, 1);
+  save();
+  renderProjNextItems(pi, item.projects[pi].nextItems);
+  renderProjDoneItems(pi, item.projects[pi].doneItems);
+  if (projDoneVisible[pi]) document.getElementById(`proj-done-list-${pi}`).style.display = 'flex';
+}
+
+function removeProjNext(pi, i) {
+  const item = getSelected(); if (!item) return;
+  item.projects[pi].nextItems.splice(i, 1);
+  save();
+  renderProjNextItems(pi, item.projects[pi].nextItems);
+}
+
+function undoProjDone(pi, i) {
+  const item = getSelected(); if (!item) return;
+  const done = item.projects[pi].doneItems.splice(i, 1)[0];
+  item.projects[pi].nextItems.push({ id: uid(), text: done.text });
+  save();
+  renderProjNextItems(pi, item.projects[pi].nextItems);
+  renderProjDoneItems(pi, item.projects[pi].doneItems);
+  if (projDoneVisible[pi]) document.getElementById(`proj-done-list-${pi}`).style.display = 'flex';
+}
+
+function renderProjResources(pi, resources) {
+  const list = document.getElementById(`proj-res-${pi}`);
+  if (!list) return;
+  list.innerHTML = '';
+  resources.forEach((r, i) => {
+    const row = document.createElement('div');
+    row.className = 'proj-res-item';
+    const isUrl = r.startsWith('http');
+    row.innerHTML = `
+      ${isUrl ? `<a href="${escHtml(r)}" target="_blank">${escHtml(r)}</a>` : `<input type="text" value="${escHtml(r)}" placeholder="Link or resource…" oninput="markDirty()">`}
+      <button class="rm" onclick="removeProjResource(${pi}, ${i})">×</button>
+    `;
+    list.appendChild(row);
+  });
+}
+
+function addProjResource(pi) {
+  const item = getSelected(); if (!item) return;
+  item.projects[pi].resources = item.projects[pi].resources || [];
+  item.projects[pi].resources.push('');
+  save();
+  renderProjResources(pi, item.projects[pi].resources);
+  const inputs = document.getElementById(`proj-res-${pi}`).querySelectorAll('input[type=text]');
+  if (inputs.length) inputs[inputs.length - 1].focus();
+}
+
+function removeProjResource(pi, i) {
+  const item = getSelected(); if (!item) return;
+  item.projects[pi].resources.splice(i, 1);
+  save();
+  renderProjResources(pi, item.projects[pi].resources);
+}
+
+function handleProjNotesInput(pi) {
+  const ta = document.getElementById(`proj-notes-${pi}`);
+  const text = ta.value;
+  const urls = text.match(URL_REGEX);
+  if (!urls) { markDirty(); return; }
+  const item = getSelected(); if (!item) { markDirty(); return; }
+  item.projects[pi].resources = item.projects[pi].resources || [];
+  let changed = false;
+  urls.forEach(url => {
+    const clean = url.replace(/[),.\]]+$/, '');
+    if (!item.projects[pi].resources.includes(clean)) { item.projects[pi].resources.push(clean); changed = true; }
+  });
+  ta.value = text.replace(URL_REGEX, '').replace(/\n{3,}/g, '\n\n').trimEnd();
+  if (changed) { save(); renderProjResources(pi, item.projects[pi].resources); }
+  markDirty();
+}
+
+// keyboard shortcut: Cmd/Ctrl+S to save
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); if (selectedId) saveDetail(); }
+});
+
+load();
+</script>
+</body>
+</html>
