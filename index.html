@@ -491,7 +491,7 @@ function handleNotesInput() {
   markDirty();
 }
 
-function saveDetail(silent) {
+async function saveDetail(silent) {
   const item = getSelected(); if (!item) return;
   item.name = document.getElementById('detailTitle').value || 'Untitled';
   item.status = document.getElementById('detailStatus').value;
