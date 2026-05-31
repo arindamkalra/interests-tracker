@@ -341,10 +341,6 @@ async function load() {
   const lastId = localStorage.getItem('lastSelectedId');
   if (lastId && data.find(d => d.id === lastId)) {
     await selectInterest(lastId);
-    setTimeout(() => {
-      const item = data.find(d => d.id === lastId);
-      if (item) renderNoteCards(item.noteCards || []);
-    }, 100);
   }
 }
 
@@ -448,6 +444,14 @@ async function selectInterest(id) {
 function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase() === tab));
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === 'tab-' + tab));
+  // re-render cards when notes tab becomes active
+  if (tab === 'notes') {
+    const item = getSelected();
+    if (item) {
+      renderNoteCards(item.noteCards || []);
+      renderLinks(item.links || []);
+    }
+  }
 }
 
 // ── NEXT ITEMS ────────────────────────────────────────
