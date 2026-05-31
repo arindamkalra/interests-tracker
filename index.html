@@ -238,38 +238,24 @@
           </select>
         </div>
         <div class="tabs">
-          <button class="tab-btn active" onclick="switchTab('general')">General</button>
-          <button class="tab-btn" onclick="switchTab('notes')">Notes</button>
+          <button class="tab-btn active" onclick="switchTab('notes')">Notes</button>
           <button class="tab-btn" onclick="switchTab('projects')">Projects</button>
         </div>
       </div>
 
-      <!-- GENERAL TAB -->
-      <div class="tab-pane active" id="tab-general">
-        <div>
-          <div class="section-label">Next things to do</div>
-          <div class="next-list" id="nextList"></div>
-          <button class="add-next" onclick="addNextItem()">+ Add item</button>
-          <div class="done-section" id="doneSection" style="display:none;">
-            <button class="done-toggle" onclick="toggleDoneVisible()" id="doneToggle">▶ Done (<span id="doneCount">0</span>)</button>
-            <div class="done-list" id="doneList" style="display:none;"></div>
-          </div>
-        </div>
-        <div>
-          <div class="section-label">Resources & Links</div>
-          <div class="links-list" id="linksList"></div>
-          <button class="add-link-btn" onclick="addLink()">+ Add link</button>
-        </div>
-      </div>
-
       <!-- NOTES TAB -->
-      <div class="tab-pane" id="tab-notes">
+      <div class="tab-pane active" id="tab-notes">
         <div>
           <textarea class="notes-area" id="detailNotes" placeholder="Jot down anything useful — what you learned, where you left off, ideas… Paste a link and it'll move to Resources automatically." oninput="handleNotesInput()"></textarea>
         </div>
         <div>
           <div class="section-label">Saved notes</div>
           <div class="notes-grid" id="notesGrid"></div>
+        </div>
+        <div>
+          <div class="section-label">Resources & Links</div>
+          <div class="links-list" id="linksList"></div>
+          <button class="add-link-btn" onclick="addLink()">+ Add link</button>
         </div>
       </div>
 
@@ -437,7 +423,7 @@ function selectInterest(id) {
   renderNoteCards(item.noteCards || []);
   renderLinks(item.links || []);
   renderProjects(item.projects || []);
-  switchTab('general');
+  switchTab('notes');
 }
 
 // ── TABS ──────────────────────────────────────────────
