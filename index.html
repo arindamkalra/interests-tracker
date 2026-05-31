@@ -189,16 +189,15 @@
     .left.hidden { display: none; }
     .right { flex: 1; min-height: 0; display: flex; flex-direction: column; }
     .detail { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-    .tab-pane { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .tab-pane { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px; }
     .back-btn { display: flex; }
     .link-item .rm, .note-card-del, .block-del, .interest-item .del-btn, .proj-del { opacity: 1 !important; }
     .detail-header { padding: 14px 16px 0; }
     .tabs { padding: 0 16px; }
-    .tab-pane { padding: 16px; }
     .save-bar { padding: 10px 16px; flex-shrink: 0; }
     .proj-page-body { padding: 20px 16px; }
     .notes-grid { grid-template-columns: 1fr; }
-    .notes-area { font-size: 16px; } /* prevents iOS zoom on focus */
+    .notes-area { font-size: 16px; }
   }
 </style>
 </head>
@@ -502,13 +501,13 @@ function undoDone(i) {
 
 // ── NOTE CARDS ────────────────────────────────────────
 function renderNoteCards(cards) {
-  const grid = document.getElementById('notesGrid'); grid.innerHTML = '';
-  cards.forEach((c, i) => {
+  const grid = document.getElementById('notesGrid'); if (!grid) return;
+  grid.innerHTML = '';
+  (cards || []).forEach((c, i) => {
     const card = document.createElement('div'); card.className = 'note-card';
-    card.innerHTML = `
-      <button class="note-card-del" onclick="removeNoteCard(${i})">×</button>
-      <textarea placeholder="Write a note…" oninput="markDirty()">${escHtml(c.text)}</textarea>
-    `;
+    const del = document.createElement('button'); del.className = 'note-card-del'; del.textContent = '×'; del.onclick = () => removeNoteCard(i);
+    const ta = document.createElement('textarea'); ta.placeholder = 'Write a note…'; ta.value = c.text || ''; ta.oninput = () => markDirty();
+    card.appendChild(del); card.appendChild(ta);
     grid.appendChild(card);
   });
 }
