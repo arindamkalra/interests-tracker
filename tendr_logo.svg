@@ -1,0 +1,40 @@
+<svg width="680" height="400" viewBox="0 0 680 400" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>Tendr logo</title>
+  <desc>Tendr app logo with centered flame and wordmark</desc>
+
+  <defs>
+    <radialGradient id="glowring" cx="50%" cy="60%" r="50%">
+      <stop offset="0%" stop-color="#FAEEDA" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#FAEEDA" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="680" height="400" fill="white"/>
+
+  <ellipse cx="340" cy="220" rx="90" ry="30" fill="url(#glowring)" opacity="0.7"/>
+
+  <g transform="translate(263, 90)">
+    <path d="M57 130
+             C57 130 20 105 20 72
+             C20 50 35 34 50 28
+             C44 46 52 54 58 52
+             C52 38 62 18 80 8
+             C76 30 86 44 94 50
+             C98 36 106 28 114 26
+             C128 42 134 62 134 80
+             C134 110 100 130 100 130
+             C96 112 86 102 78 102
+             C70 102 62 112 57 130Z"
+          fill="#EF9F27" opacity="0.18"/>
+  </g>
+
+  <text x="340" y="268" text-anchor="middle"
+        font-family="Georgia, 'Times New Roman', serif"
+        font-size="52" font-weight="400" letter-spacing="8"
+        fill="#854F0B" opacity="0.9">tendr</text>
+
+  <text x="340" y="296" text-anchor="middle"
+        font-family="Georgia, 'Times New Roman', serif"
+        font-size="13" font-weight="400" letter-spacing="4"
+        fill="#BA7517" opacity="0.7">what matters</text>
+</svg>

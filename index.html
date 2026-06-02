@@ -3,445 +3,705 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Interests</title>
+<title>tendr</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1a1a1a">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
+/* ── TOKENS ── */
+:root {
+  --bg: #FDFCF9;
+  --surface: #FFFFFF;
+  --border: #EDE8E0;
+  --border-light: #F5F1EC;
+  --ink: #1C1C1C;
+  --muted: #9A8F84;
+  --faint: #C4BAB0;
+  --accent: #1C1C1C;
+  --accent-hover: #3A3A3A;
+  --check: #4A7C59;
+  --check-bg: #EDF5EF;
+}
+
+/* ── RESET ── */
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f7f7f5; color: #1a1a1a; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: var(--bg); color: var(--ink); height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
 
-/* HEADER */
-header { padding: 14px 24px; background: #fff; border-bottom: 1px solid #e5e5e5; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-header h1 { font-size: 17px; font-weight: 700; }
-#syncStatus { font-size: 11px; color: #aaa; margin-left: auto; }
+/* ── HEADER ── */
+.app-header { padding: 13px 20px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.app-title-wrap { display: flex; align-items: center; gap: 8px; }
+.app-title { font-family: Georgia, 'Times New Roman', serif; font-size: 20px; font-weight: 400; color: #854F0B; letter-spacing: 3px; }
+#globalSync { font-size: 11px; color: var(--faint); }
 
-/* LAYOUT */
-.app { display: flex; flex: 1; overflow: hidden; }
+/* ── MAIN AREA ── */
+.app-body { flex: 1; display: flex; overflow: hidden; }
 
-/* LEFT */
-.left { width: 240px; min-width: 240px; background: #fff; border-right: 1px solid #e5e5e5; display: flex; flex-direction: column; flex-shrink: 0; }
-.left-header { padding: 12px 14px; border-bottom: 1px solid #e5e5e5; display: flex; justify-content: space-between; align-items: center; }
-.left-header span { font-size: 11px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 0.06em; }
-.add-btn { background: #1a1a1a; color: #fff; border: none; border-radius: 6px; padding: 5px 11px; font-size: 13px; cursor: pointer; }
-.add-btn:hover { background: #333; }
-.interest-list { flex: 1; overflow-y: auto; padding: 6px; }
-.interest-item { padding: 9px 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 9px; margin-bottom: 1px; border: 1px solid transparent; }
-.interest-item:hover { background: #f7f7f5; }
-.interest-item.active { background: #f0efeb; border-color: #d9d9d4; }
-.interest-item .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.dot.active { background: #22c55e; }
-.dot.next { background: #f59e0b; }
-.dot.someday { background: #94a3b8; }
-.dot.archived { background: #ddd; }
-.interest-item .iname { flex: 1; font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.interest-item .idel { opacity: 0; background: none; border: none; color: #bbb; cursor: pointer; font-size: 16px; padding: 0; line-height: 1; }
-.interest-item:hover .idel { opacity: 1; }
-.interest-item .idel:hover { color: #e53e3e; }
+/* ── BOTTOM NAV ── */
+.bottom-nav { display: flex; background: var(--surface); border-top: 1px solid var(--border); flex-shrink: 0; }
+.nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 10px 4px 12px; background: none; border: none; cursor: pointer; color: var(--faint); transition: color 0.2s; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.nav-btn.on { color: var(--ink); }
+.nav-btn .nicon { font-size: 20px; }
+.nav-btn .nlabel { font-size: 10px; font-weight: 500; letter-spacing: 0.3px; }
 
-/* RIGHT */
-.right { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-.empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #ccc; gap: 8px; }
-.empty-state .eicon { font-size: 32px; }
-.empty-state p { font-size: 14px; }
+/* ── VIEWS ── */
+.view { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+.view.on { display: flex; }
 
-/* DETAIL */
-.detail { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-.detail-top { padding: 18px 28px 0; flex-shrink: 0; }
-.back-btn { display: none; align-items: center; gap: 5px; background: none; border: none; color: #888; font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 10px; }
-.back-btn:hover { color: #1a1a1a; }
-.title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-.ititle { font-size: 22px; font-weight: 700; border: none; background: none; outline: none; flex: 1; color: #1a1a1a; }
-.ititle:focus { border-bottom: 2px solid #1a1a1a; }
-.status-sel { font-size: 11px; font-weight: 600; border: 1px solid #e5e5e5; border-radius: 20px; padding: 4px 10px; background: #fff; cursor: pointer; outline: none; color: #555; flex-shrink: 0; }
+/* ══════════════════════════════════════
+   INTERESTS VIEW
+══════════════════════════════════════ */
+.int-layout { display: flex; flex: 1; overflow: hidden; }
 
-/* TABS */
-.tabs { display: flex; border-bottom: 1px solid #e5e5e5; }
-.tab-btn { background: none; border: none; border-bottom: 2px solid transparent; padding: 8px 16px; font-size: 13px; font-weight: 600; color: #aaa; cursor: pointer; margin-bottom: -1px; }
-.tab-btn.on { color: #1a1a1a; border-bottom-color: #1a1a1a; }
-.tab-btn:hover:not(.on) { color: #555; }
-.tab-pane { display: none; flex: 1; flex-direction: column; overflow-y: auto; padding: 20px 28px; gap: 20px; }
-.tab-pane.on { display: flex; }
+/* left panel */
+.int-left { width: 240px; min-width: 240px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+.int-left-header { padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.int-left-header span { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.add-int-btn { background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 5px 11px; font-size: 13px; cursor: pointer; }
+.add-int-btn:hover { background: var(--accent-hover); }
+.int-list { flex: 1; overflow-y: auto; padding: 6px; }
+.int-item { padding: 9px 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 9px; margin-bottom: 1px; border: 1px solid transparent; }
+.int-item:hover { background: var(--bg); }
+.int-item.on { background: var(--bg); border-color: var(--border); }
+.int-item .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.dot.active { background: #22c55e; } .dot.next { background: #f59e0b; } .dot.someday { background: #94a3b8; } .dot.archived { background: var(--border); }
+.int-item .iname { flex: 1; font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.int-item .idel { opacity: 0; background: none; border: none; color: var(--faint); cursor: pointer; font-size: 16px; padding: 0; }
+.int-item:hover .idel { opacity: 1; }
+.int-item .idel:hover { color: #c0392b; }
 
-/* SECTION LABEL */
-.slabel { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #bbb; margin-bottom: 8px; }
+/* right panel */
+.int-right { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+.int-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--faint); gap: 8px; }
+.int-empty .eicon { font-size: 32px; }
+.int-empty p { font-size: 14px; }
 
-/* NOTE TEXTAREA */
-.note-input { width: 100%; border: 1px solid #e5e5e5; border-radius: 10px; padding: 14px; font-size: 14px; line-height: 1.6; resize: none; outline: none; background: #fff; color: #1a1a1a; font-family: inherit; min-height: 120px; }
-.note-input:focus { border-color: #aaa; }
+/* interest detail */
+.int-detail { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.int-detail-top { padding: 16px 24px 0; flex-shrink: 0; }
+.back-btn { display: none; align-items: center; gap: 5px; background: none; border: none; color: var(--muted); font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 10px; }
+.back-btn:hover { color: var(--ink); }
+.int-title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.int-title { font-size: 22px; font-weight: 700; border: none; background: none; outline: none; flex: 1; color: var(--ink); }
+.int-title:focus { border-bottom: 2px solid var(--ink); }
+.status-sel { font-size: 11px; font-weight: 600; border: 1px solid var(--border); border-radius: 20px; padding: 4px 10px; background: var(--surface); cursor: pointer; outline: none; color: var(--muted); flex-shrink: 0; }
+.int-tabs { display: flex; border-bottom: 1px solid var(--border); }
+.int-tab { background: none; border: none; border-bottom: 2px solid transparent; padding: 8px 16px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; margin-bottom: -1px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.int-tab.on { color: var(--ink); border-bottom-color: var(--ink); }
+.int-pane { display: none; flex: 1; flex-direction: column; overflow-y: auto; padding: 18px 24px; gap: 18px; }
+.int-pane.on { display: flex; }
 
-/* NOTE CARDS */
-.cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-.note-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 10px; padding: 12px; position: relative; }
-.note-card:hover { border-color: #ccc; }
-.note-card textarea { width: 100%; border: none; outline: none; resize: none; font-size: 13px; line-height: 1.55; color: #1a1a1a; font-family: inherit; background: transparent; min-height: 60px; }
-.card-del { position: absolute; top: 6px; right: 6px; background: none; border: none; color: #ccc; cursor: pointer; font-size: 14px; opacity: 0; line-height: 1; }
+.slabel { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--faint); margin-bottom: 8px; }
+
+/* note input */
+.note-input { width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 14px; font-size: 14px; line-height: 1.6; resize: none; outline: none; background: var(--surface); color: var(--ink); font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; min-height: 110px; }
+.note-input:focus { border-color: var(--muted); }
+
+/* note cards */
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+.note-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px; position: relative; }
+.note-card:hover { border-color: var(--muted); }
+.note-card textarea { width: 100%; border: none; outline: none; resize: none; font-size: 13px; line-height: 1.55; color: var(--ink); font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: transparent; min-height: 60px; }
+.card-del { position: absolute; top: 6px; right: 6px; background: none; border: none; color: var(--faint); cursor: pointer; font-size: 14px; opacity: 0; }
 .note-card:hover .card-del { opacity: 1; }
-.card-del:hover { color: #e53e3e; }
+.card-del:hover { color: #c0392b; }
 
-/* LINKS */
+/* links */
 .links-list { display: flex; flex-direction: column; gap: 8px; }
-.link-row { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 8px 12px; }
-.link-row:hover { border-color: #ccc; }
+.link-row { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; }
+.link-row:hover { border-color: var(--muted); }
 .link-inner { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.link-title { border: none; outline: none; font-size: 13px; font-weight: 500; color: #1a1a1a; background: none; width: 100%; }
-.link-url-input { border: none; outline: none; font-size: 11px; color: #888; background: none; width: 100%; }
-.link-url-display { font-size: 11px; color: #2563eb; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
-.link-url-display:hover { text-decoration: underline; }
-.link-del { background: none; border: none; color: #ccc; cursor: pointer; font-size: 15px; padding: 0; opacity: 0; flex-shrink: 0; }
+.link-title-inp { border: none; outline: none; font-size: 13px; font-weight: 500; color: var(--ink); background: none; width: 100%; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.link-url-inp { border: none; outline: none; font-size: 11px; color: var(--muted); background: none; width: 100%; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.link-url-a { font-size: 11px; color: #4A7C8A; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+.link-url-a:hover { text-decoration: underline; }
+.link-del { background: none; border: none; color: var(--faint); cursor: pointer; font-size: 15px; padding: 0; opacity: 0; flex-shrink: 0; }
 .link-row:hover .link-del { opacity: 1; }
-.link-del:hover { color: #e53e3e; }
-.add-link { background: none; border: 1px dashed #ddd; border-radius: 8px; color: #bbb; font-size: 13px; cursor: pointer; padding: 8px 12px; text-align: left; }
-.add-link:hover { border-color: #aaa; color: #666; }
+.link-del:hover { color: #c0392b; }
+.add-link-btn { background: none; border: 1px dashed var(--border); border-radius: 8px; color: var(--faint); font-size: 13px; cursor: pointer; padding: 8px 12px; text-align: left; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.add-link-btn:hover { border-color: var(--muted); color: var(--muted); }
 
-/* PROJECTS LIST */
+/* projects */
 .proj-list { display: flex; flex-direction: column; gap: 8px; }
-.proj-row { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #e5e5e5; border-radius: 10px; padding: 12px 16px; cursor: pointer; }
-.proj-row:hover { border-color: #ccc; background: #fafaf9; }
-.proj-icon { font-size: 16px; flex-shrink: 0; }
-.proj-name { flex: 1; font-size: 14px; font-weight: 600; }
-.proj-meta { font-size: 11px; color: #bbb; }
-.proj-arrow { color: #ccc; }
-.proj-del { background: none; border: none; color: #ccc; cursor: pointer; font-size: 15px; opacity: 0; padding: 0; }
-.proj-row:hover .proj-del { opacity: 1; }
-.proj-del:hover { color: #e53e3e; }
-.add-proj { background: none; border: 1px dashed #ddd; border-radius: 10px; color: #bbb; font-size: 13px; cursor: pointer; padding: 12px 16px; text-align: left; }
-.add-proj:hover { border-color: #aaa; color: #666; }
+.proj-row { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; cursor: pointer; }
+.proj-row:hover { border-color: var(--muted); background: var(--bg); }
+.proj-row .pname { flex: 1; font-size: 14px; font-weight: 600; }
+.proj-row .pmeta { font-size: 11px; color: var(--faint); }
+.proj-row .parr { color: var(--faint); }
+.proj-del-btn { background: none; border: none; color: var(--faint); cursor: pointer; font-size: 15px; opacity: 0; padding: 0; }
+.proj-row:hover .proj-del-btn { opacity: 1; }
+.proj-del-btn:hover { color: #c0392b; }
+.add-proj-btn { background: none; border: 1px dashed var(--border); border-radius: 10px; color: var(--faint); font-size: 13px; cursor: pointer; padding: 12px 16px; text-align: left; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.add-proj-btn:hover { border-color: var(--muted); color: var(--muted); }
 
-/* SAVE BAR */
-.save-bar { display: flex; justify-content: flex-end; align-items: center; gap: 10px; padding: 10px 28px; border-top: 1px solid #f0f0f0; flex-shrink: 0; background: #fff; }
-.save-btn { background: #1a1a1a; color: #fff; border: none; border-radius: 8px; padding: 7px 18px; font-size: 13px; cursor: pointer; }
-.save-btn:hover { background: #333; }
-.saved-msg { font-size: 12px; color: #22c55e; opacity: 0; transition: opacity 0.3s; }
-.saved-msg.on { opacity: 1; }
+/* save bar */
+.int-save-bar { display: flex; justify-content: flex-end; align-items: center; gap: 10px; padding: 10px 24px; border-top: 1px solid var(--border-light); flex-shrink: 0; background: var(--surface); }
+.save-btn { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 7px 18px; font-size: 13px; cursor: pointer; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.save-btn:hover { background: var(--accent-hover); }
+.saved-flash { font-size: 12px; color: var(--check); opacity: 0; transition: opacity 0.3s; }
+.saved-flash.on { opacity: 1; }
 
-/* PROJECT PAGE */
-.proj-page { position: absolute; inset: 0; background: #fff; display: none; flex-direction: column; z-index: 10; }
+/* project page overlay */
+.proj-page { position: absolute; inset: 0; background: var(--surface); display: none; flex-direction: column; z-index: 10; }
 .proj-page.on { display: flex; }
-.proj-page-header { padding: 14px 28px; border-bottom: 1px solid #e5e5e5; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.proj-page-back { background: none; border: none; color: #888; font-size: 13px; cursor: pointer; }
-.proj-page-back:hover { color: #1a1a1a; }
-#projSyncStatus { font-size: 11px; color: #aaa; }
-.proj-page-save { margin-left: auto; background: #1a1a1a; color: #fff; border: none; border-radius: 7px; padding: 6px 16px; font-size: 13px; cursor: pointer; }
-.proj-page-save:hover { background: #333; }
-.proj-page-body { flex: 1; overflow-y: auto; padding: 32px 48px; max-width: 760px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 6px; }
-.proj-title { font-size: 30px; font-weight: 700; border: none; outline: none; background: none; width: 100%; margin-bottom: 12px; color: #1a1a1a; }
-.proj-title::placeholder { color: #ddd; }
-
-/* BLOCKS */
+.proj-page-hdr { padding: 13px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.proj-page-back { background: none; border: none; color: var(--muted); font-size: 13px; cursor: pointer; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.proj-page-back:hover { color: var(--ink); }
+#projSync { font-size: 11px; color: var(--faint); }
+.proj-page-save { margin-left: auto; background: var(--accent); color: #fff; border: none; border-radius: 7px; padding: 6px 16px; font-size: 13px; cursor: pointer; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.proj-page-save:hover { background: var(--accent-hover); }
+.proj-page-body { flex: 1; overflow-y: auto; padding: 28px 44px; max-width: 740px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 4px; }
+.proj-title-inp { font-size: 28px; font-weight: 700; border: none; outline: none; background: none; width: 100%; margin-bottom: 10px; color: var(--ink); font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.proj-title-inp::placeholder { color: var(--border); }
 .block-wrap { display: flex; align-items: flex-start; gap: 6px; padding: 2px 0; }
-.block-handle { color: #ddd; font-size: 12px; cursor: grab; padding-top: 4px; opacity: 0; width: 14px; flex-shrink: 0; }
+.block-handle { color: var(--border); font-size: 12px; cursor: grab; padding-top: 4px; opacity: 0; width: 14px; flex-shrink: 0; }
 .block-wrap:hover .block-handle { opacity: 1; }
 .block-body { flex: 1; min-width: 0; }
-.block-del { background: none; border: none; color: #ddd; cursor: pointer; font-size: 14px; padding: 0; opacity: 0; flex-shrink: 0; padding-top: 3px; }
-.block-wrap:hover .block-del { opacity: 1; }
-.block-del:hover { color: #e53e3e; }
-
-.b-text { width: 100%; border: none; outline: none; resize: none; font-size: 15px; line-height: 1.65; color: #1a1a1a; font-family: inherit; background: none; }
-.b-text::placeholder { color: #ccc; }
-.b-heading { width: 100%; border: none; outline: none; font-size: 20px; font-weight: 700; color: #1a1a1a; font-family: inherit; background: none; }
-.b-heading::placeholder { color: #ddd; }
-
+.block-del-btn { background: none; border: none; color: var(--border); cursor: pointer; font-size: 14px; padding: 0; opacity: 0; flex-shrink: 0; padding-top: 3px; }
+.block-wrap:hover .block-del-btn { opacity: 1; }
+.block-del-btn:hover { color: #c0392b; }
+.b-text { width: 100%; border: none; outline: none; resize: none; font-size: 15px; line-height: 1.65; color: var(--ink); font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: none; }
+.b-text::placeholder { color: var(--faint); }
+.b-heading { width: 100%; border: none; outline: none; font-size: 20px; font-weight: 700; color: var(--ink); font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: none; }
+.b-heading::placeholder { color: var(--border); }
 .b-checklist { display: flex; flex-direction: column; gap: 5px; }
 .b-check-row { display: flex; align-items: center; gap: 8px; }
-.b-check-row input[type=checkbox] { accent-color: #1a1a1a; width: 15px; height: 15px; flex-shrink: 0; }
-.b-check-row input[type=text] { flex: 1; border: none; outline: none; font-size: 15px; background: none; color: #1a1a1a; font-family: inherit; }
-.b-check-row input[type=text].checked { text-decoration: line-through; color: #aaa; }
-.b-check-row .rm { background: none; border: none; color: #ddd; cursor: pointer; font-size: 14px; padding: 0; opacity: 0; }
-.b-check-row:hover .rm { opacity: 1; }
-.add-check { background: none; border: none; color: #bbb; font-size: 13px; cursor: pointer; padding: 2px 0; text-align: left; margin-top: 2px; }
-.add-check:hover { color: #555; }
-
-.b-link-box { display: flex; align-items: center; gap: 8px; background: #f7f7f5; border: 1px solid #e5e5e5; border-radius: 8px; padding: 8px 12px; }
-.b-link-box .link-inner { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.b-link-title { border: none; outline: none; font-size: 13px; font-weight: 500; color: #1a1a1a; background: none; width: 100%; }
-.b-link-url { border: none; outline: none; font-size: 11px; color: #888; background: none; width: 100%; }
-.b-link-display { font-size: 11px; color: #2563eb; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.b-link-display:hover { text-decoration: underline; }
-.b-link-box .rm { background: none; border: none; color: #ccc; cursor: pointer; font-size: 14px; padding: 0; opacity: 0; }
-.b-link-box:hover .rm { opacity: 1; }
-
+.b-check-row input[type=checkbox] { accent-color: var(--ink); width: 15px; height: 15px; flex-shrink: 0; }
+.b-check-row input[type=text] { flex: 1; border: none; outline: none; font-size: 15px; background: none; color: var(--ink); font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.b-check-row input[type=text].checked { text-decoration: line-through; color: var(--muted); }
+.b-check-row .brm { background: none; border: none; color: var(--border); cursor: pointer; font-size: 14px; padding: 0; opacity: 0; }
+.b-check-row:hover .brm { opacity: 1; }
+.add-check-btn { background: none; border: none; color: var(--faint); font-size: 13px; cursor: pointer; padding: 2px 0; text-align: left; margin-top: 2px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.add-check-btn:hover { color: var(--ink); }
+.b-link-box { display: flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; }
+.b-link-inner { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.b-link-title-inp { border: none; outline: none; font-size: 13px; font-weight: 500; color: var(--ink); background: none; width: 100%; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.b-link-url-inp { border: none; outline: none; font-size: 11px; color: var(--muted); background: none; width: 100%; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.b-link-a { font-size: 11px; color: #4A7C8A; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.b-link-a:hover { text-decoration: underline; }
+.b-link-box .brm { background: none; border: none; color: var(--faint); cursor: pointer; font-size: 14px; padding: 0; opacity: 0; }
+.b-link-box:hover .brm { opacity: 1; }
 .add-block-row { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 0; }
-.add-block { background: none; border: 1px solid #e5e5e5; border-radius: 6px; color: #999; font-size: 12px; cursor: pointer; padding: 5px 10px; }
-.add-block:hover { border-color: #aaa; color: #333; background: #f7f7f5; }
+.add-block-btn { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--muted); font-size: 12px; cursor: pointer; padding: 5px 10px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.add-block-btn:hover { border-color: var(--muted); color: var(--ink); background: var(--bg); }
 
-/* MOBILE */
+/* ══════════════════════════════════════
+   WELLNESS VIEW
+══════════════════════════════════════ */
+.wellness-wrap { flex: 1; overflow-y: auto; padding: 16px 20px 20px; max-width: 680px; width: 100%; margin: 0 auto; }
+.well-date-bar { display: flex; justify-content: space-between; align-items: center; background: var(--ink); color: #fff; border-radius: 14px; padding: 10px 16px; margin-bottom: 12px; }
+.well-date-bar span { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; }
+.well-reset-btn { background: rgba(255,255,255,0.12); border: none; color: #fff; padding: 4px 11px; border-radius: 20px; font-size: 11px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; cursor: pointer; }
+.well-reset-btn:hover { background: rgba(255,255,255,0.22); }
+.well-progress-wrap { background: var(--border); border-radius: 99px; height: 5px; margin-bottom: 5px; overflow: hidden; }
+.well-progress-fill { height: 100%; background: var(--ink); border-radius: 99px; transition: width 0.4s ease; }
+.well-progress-label { text-align: right; font-size: 11px; color: var(--muted); margin-bottom: 14px; }
+.well-block { background: var(--surface); border-radius: 14px; margin-bottom: 10px; overflow: hidden; border: 1px solid var(--border); }
+.well-block-hdr { display: flex; align-items: center; gap: 9px; padding: 10px 14px 8px; border-bottom: 1px solid var(--border-light); }
+.well-block-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--border); }
+.well-block-title { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600; flex: 1; }
+.well-block-time { font-size: 10px; color: var(--muted); background: var(--bg); padding: 2px 8px; border-radius: 20px; }
+.well-item { display: flex; align-items: flex-start; gap: 11px; padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--border-light); transition: background 0.15s; }
+.well-item:last-child { border-bottom: none; }
+.well-item:hover { background: var(--bg); }
+.well-item.checked { background: var(--check-bg); }
+.well-checkbox { width: 19px; height: 19px; border-radius: 5px; border: 2px solid var(--border); flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; background: var(--surface); }
+.well-item.checked .well-checkbox { background: var(--ink); border-color: var(--ink); }
+.well-checkbox svg { opacity: 0; transform: scale(0.4); transition: all 0.2s; }
+.well-item.checked .well-checkbox svg { opacity: 1; transform: scale(1); }
+.well-item-text { font-size: 13px; line-height: 1.5; color: var(--ink); padding-top: 1px; transition: color 0.2s; }
+.well-item.checked .well-item-text { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--border); }
+.well-done-msg { display: none; text-align: center; padding: 16px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; color: var(--muted); }
+
+/* ══════════════════════════════════════
+   FOCUS VIEW
+══════════════════════════════════════ */
+.focus-wrap { flex: 1; overflow-y: auto; padding: 16px 20px 20px; max-width: 680px; width: 100%; margin: 0 auto; }
+
+/* pomodoro */
+.pom-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 14px; }
+.pom-stripe { display: none; }
+.pom-bar { display: flex; align-items: center; gap: 10px; padding: 12px 16px; }
+.pom-modes { display: flex; gap: 4px; }
+.pom-mode { background: none; border: 1.5px solid var(--border); border-radius: 20px; font-size: 10px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: var(--muted); padding: 3px 9px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+.pom-mode.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+.pom-center { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.pom-time { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 30px; font-weight: 400; color: var(--ink); line-height: 1; letter-spacing: -1px; white-space: nowrap; }
+.pom-sub { font-size: 10px; color: var(--muted); white-space: nowrap; }
+.pom-actions { display: flex; gap: 5px; align-items: center; }
+.pom-start { background: var(--ink); color: #fff; border: none; border-radius: 8px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 12px; font-weight: 500; cursor: pointer; padding: 7px 14px; white-space: nowrap; }
+.pom-start:hover { background: var(--accent-hover); }
+.pom-reset { background: var(--bg); color: var(--muted); border: none; border-radius: 8px; width: 30px; height: 30px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.pom-reset:hover { background: var(--border); }
+.pom-count { font-size: 10px; color: var(--muted); display: flex; align-items: center; gap: 3px; white-space: nowrap; }
+.pom-prog-line { height: 3px; background: var(--border-light); }
+.pom-prog-fill { height: 100%; background: var(--ink); transition: width 0.5s ease; border-radius: 0 2px 2px 0; }
+
+/* tasks */
+.focus-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 14px; }
+.focus-card-stripe { display: none; }
+.focus-card-hdr { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px 9px; border-bottom: 1px solid var(--border-light); }
+.focus-card-title { font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); }
+.focus-clear-btn { font-size: 10px; color: var(--muted); background: var(--bg); border: none; border-radius: 20px; padding: 3px 9px; cursor: pointer; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.focus-clear-btn:hover { background: var(--border); }
+.focus-input-row { display: flex; gap: 7px; padding: 9px 12px; border-bottom: 1px solid var(--border-light); }
+.focus-input { flex: 1; border: 1.5px solid var(--border); border-radius: 9px; padding: 7px 11px; font-size: 13px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: var(--ink); background: var(--bg); outline: none; }
+.focus-input:focus { border-color: var(--muted); }
+.focus-input::placeholder { color: var(--faint); }
+.focus-add-btn { background: var(--accent); color: #fff; border: none; border-radius: 9px; width: 34px; height: 34px; font-size: 19px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.focus-add-btn:hover { background: var(--accent-hover); }
+.focus-list { padding: 4px 0; min-height: 36px; }
+.focus-item { display: flex; align-items: flex-start; gap: 9px; padding: 8px 12px; border-bottom: 1px solid var(--border-light); transition: background 0.15s; }
+.focus-item:last-child { border-bottom: none; }
+.focus-item:hover { background: var(--bg); }
+.focus-item.done { background: var(--check-bg); }
+.focus-cb { width: 17px; height: 17px; border-radius: 4px; border: 2px solid var(--border); flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.18s; background: var(--surface); }
+.focus-item.done .focus-cb { background: var(--ink); border-color: var(--ink); }
+.focus-cb svg { opacity: 0; transform: scale(0.4); transition: all 0.2s; }
+.focus-item.done .focus-cb svg { opacity: 1; transform: scale(1); }
+.focus-item-text { flex: 1; font-size: 13px; line-height: 1.5; color: var(--ink); word-break: break-word; padding-top: 1px; }
+.focus-item.done .focus-item-text { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--border); }
+.focus-item-del { background: none; border: none; color: var(--faint); font-size: 15px; cursor: pointer; padding: 0 2px; transition: color 0.15s; flex-shrink: 0; }
+.focus-item-del:hover { color: #c0392b; }
+.focus-empty { text-align: center; padding: 14px; font-size: 11.5px; color: var(--faint); font-style: italic; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+
+/* weekly goals */
+.goal-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--border-light); }
+.goal-item:last-child { border-bottom: none; }
+.goal-icon { width: 28px; height: 28px; border-radius: 50%; background: var(--bg); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; margin-top: 2px; font-size: 13px; color: var(--muted); transition: all 0.2s; }
+.goal-item.achieved .goal-icon { background: var(--ink); border-color: var(--ink); color: #fff; }
+.goal-main { flex: 1; min-width: 0; }
+.goal-text { font-size: 13px; line-height: 1.4; color: var(--ink); margin-bottom: 7px; word-break: break-word; }
+.goal-item.achieved .goal-text { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--border); }
+.goal-slider-row { display: flex; align-items: center; gap: 8px; }
+.goal-slider { -webkit-appearance: none; appearance: none; flex: 1; height: 4px; border-radius: 99px; outline: none; cursor: pointer; background: var(--border); }
+.goal-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%; background: var(--ink); cursor: pointer; }
+.goal-pct { font-size: 11px; color: var(--muted); min-width: 32px; text-align: right; font-weight: 500; }
+.goal-del-btn { background: none; border: none; color: var(--faint); font-size: 15px; cursor: pointer; padding: 0 2px; flex-shrink: 0; }
+.goal-del-btn:hover { color: #c0392b; }
+.goal-empty { text-align: center; padding: 16px; font-size: 11.5px; color: var(--faint); font-style: italic; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.week-prog-row { padding: 6px 14px 8px; display: flex; align-items: center; gap: 8px; }
+.week-prog-bar { flex: 1; background: var(--border); border-radius: 99px; height: 4px; overflow: hidden; }
+.week-prog-fill { height: 100%; background: var(--ink); border-radius: 99px; transition: width 0.4s ease; }
+.week-prog-label { font-size: 10px; color: var(--muted); white-space: nowrap; }
+.goal-input-row { display: flex; gap: 7px; padding: 9px 12px; border-bottom: 1px solid var(--border-light); }
+.goal-input { flex: 1; border: 1.5px solid var(--border); border-radius: 9px; padding: 7px 11px; font-size: 13px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: var(--ink); background: var(--bg); outline: none; }
+.goal-input:focus { border-color: var(--muted); }
+.goal-add-btn { background: var(--accent); color: #fff; border: none; border-radius: 9px; width: 34px; height: 34px; font-size: 19px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.goal-add-btn:hover { background: var(--accent-hover); }
+
+/* ── MOBILE ── */
 @media (max-width: 640px) {
-  .app { flex-direction: column; }
-  .left { width: 100%; min-width: unset; border-right: none; border-bottom: 1px solid #e5e5e5; max-height: 40vh; flex-shrink: 0; }
-  .left.hidden { display: none; }
-  .right { flex: 1; min-height: 0; }
-  .detail { overflow: hidden; }
-  .tab-pane { padding: 14px 16px; }
-  .detail-top { padding: 14px 16px 0; }
-  .tabs { padding: 0; }
-  .save-bar { padding: 10px 16px; }
+  .int-left { width: 100%; min-width: unset; border-right: none; border-bottom: 1px solid #e5e5e5; max-height: 40vh; flex-shrink: 0; }
+  .int-left.hidden { display: none; }
+  .int-layout { flex-direction: column; }
+  .int-right { flex: 1; min-height: 0; }
+  .int-pane { padding: 14px 16px; gap: 14px; }
+  .int-detail-top { padding: 14px 16px 0; }
+  .int-tabs { padding: 0; }
+  .int-save-bar { padding: 10px 16px; }
   .back-btn { display: flex; }
   .cards-grid { grid-template-columns: 1fr; }
   .note-input { font-size: 16px; }
   .proj-page-body { padding: 20px 16px; }
-  .idel, .link-del, .card-del, .proj-del, .block-del, .b-link-box .rm, .b-check-row .rm { opacity: 1 !important; }
+  .idel, .link-del, .card-del, .proj-del-btn, .block-del-btn, .b-link-box .brm, .b-check-row .brm, .goal-del-btn, .focus-item-del { opacity: 1 !important; }
+  .wellness-wrap, .focus-wrap { padding: 12px 14px 16px; }
+  /* larger text for phone readability */
+  .int-item .iname { font-size: 16px; }
+  .int-title { font-size: 20px; }
+  .note-input { font-size: 16px; line-height: 1.6; }
+  .note-card textarea { font-size: 15px; }
+  .well-item-text { font-size: 15px; line-height: 1.6; }
+  .well-block-title { font-size: 16px; }
+  .focus-item-text { font-size: 15px; }
+  .goal-text { font-size: 15px; }
+  .pom-time { font-size: 36px; }
+  .focus-input, .goal-input { font-size: 16px; } /* prevent iOS zoom */
+  .link-title-inp, .link-url-inp { font-size: 15px; }
+  .app-title { font-size: 17px; }
+  .nav-btn .nlabel { font-size: 11px; }
+  .nav-btn .nicon { font-size: 22px; }
 }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>🗂 Interests</h1>
-  <span id="syncStatus"></span>
-</header>
-
-<div class="app">
-  <div class="left" id="leftPanel">
-    <div class="left-header">
-      <span>All Interests</span>
-      <button class="add-btn" onclick="addInterest()">+ Add</button>
-    </div>
-    <div class="interest-list" id="interestList"></div>
+<!-- HEADER -->
+<div class="app-header">
+  <div class="app-title-wrap">
+    <svg width="22" height="22" viewBox="0 0 154 122" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+      <ellipse cx="77" cy="100" rx="45" ry="15" fill="#FAEEDA" opacity="0.7"/>
+      <path d="M57 130 C57 130 20 105 20 72 C20 50 35 34 50 28 C44 46 52 54 58 52 C52 38 62 18 80 8 C76 30 86 44 94 50 C98 36 106 28 114 26 C128 42 134 62 134 80 C134 110 100 130 100 130 C96 112 86 102 78 102 C70 102 62 112 57 130Z" fill="#EF9F27" opacity="0.9" transform="translate(-3,-8)"/>
+    </svg>
+    <span class="app-title">tendr</span>
   </div>
-
-  <div class="right" id="rightPanel">
-    <div class="empty-state" id="emptyState">
-      <div class="eicon">✦</div>
-      <p>Select an interest or add a new one</p>
-    </div>
-
-    <div class="detail" id="detailPanel" style="display:none;">
-      <div class="detail-top">
-        <button class="back-btn" onclick="goBack()">← All Interests</button>
-        <div class="title-row">
-          <input class="ititle" id="iTitle" type="text" placeholder="Interest name" oninput="markDirty()">
-          <select class="status-sel" id="iStatus" onchange="markDirty(); renderList()">
-            <option value="next">🟡 Up Next</option>
-            <option value="active">🟢 Active</option>
-            <option value="someday">⚪ Someday</option>
-            <option value="archived">🔘 Archived</option>
-          </select>
-        </div>
-        <div class="tabs">
-          <button class="tab-btn on" data-tab="notes" onclick="switchTab('notes')">Notes</button>
-          <button class="tab-btn" data-tab="projects" onclick="switchTab('projects')">Projects</button>
-        </div>
-      </div>
-
-      <div class="tab-pane on" id="pane-notes">
-        <div>
-          <textarea class="note-input" id="noteInput" placeholder="Jot down anything useful — what you learned, where you left off, ideas… Paste a link and it'll also go to Resources."></textarea>
-        </div>
-        <div>
-          <div class="slabel">Saved Notes</div>
-          <div class="cards-grid" id="cardsGrid"></div>
-        </div>
-        <div>
-          <div class="slabel">Resources & Links</div>
-          <div class="links-list" id="linksList"></div>
-          <button class="add-link" onclick="addLink()">+ Add link</button>
-        </div>
-      </div>
-
-      <div class="tab-pane" id="pane-projects">
-        <div class="proj-list" id="projList"></div>
-        <button class="add-proj" onclick="addProject()">+ New project</button>
-      </div>
-
-      <div class="save-bar">
-        <span class="saved-msg" id="savedMsg">Saved ✓</span>
-        <button class="save-btn" onclick="saveInterest()">Save</button>
-      </div>
-    </div>
-
-    <!-- PROJECT PAGE -->
-    <div class="proj-page" id="projPage">
-      <div class="proj-page-header">
-        <button class="proj-page-back" onclick="closeProjPage()">← Back</button>
-        <span id="projSyncStatus"></span>
-        <button class="proj-page-save" onclick="saveProjPage()">Save</button>
-      </div>
-      <div class="proj-page-body" id="projPageBody"></div>
-    </div>
-  </div>
+  <span id="globalSync"></span>
 </div>
 
+<!-- MAIN BODY -->
+<div class="app-body">
+
+  <!-- ═══ INTERESTS VIEW ═══ -->
+  <div class="view" id="view-interests">
+    <div class="int-layout">
+      <div class="int-left" id="intLeft">
+        <div class="int-left-header">
+          <span>Interests</span>
+          <button class="add-int-btn" onclick="addInterest()">+ Add</button>
+        </div>
+        <div class="int-list" id="intList"></div>
+      </div>
+      <div class="int-right" id="intRight">
+        <div class="int-empty" id="intEmpty">
+          <div class="eicon">✦</div>
+          <p>Select an interest or add a new one</p>
+        </div>
+        <div class="int-detail" id="intDetail" style="display:none;">
+          <div class="int-detail-top">
+            <button class="back-btn" onclick="intGoBack()">← Interests</button>
+            <div class="int-title-row">
+              <input class="int-title" id="intTitleInput" type="text" placeholder="Interest name" oninput="intMarkDirty()">
+              <select class="status-sel" id="intStatusSel" onchange="intMarkDirty(); renderIntList()">
+                <option value="next">🟡 Up Next</option>
+                <option value="active">🟢 Active</option>
+                <option value="someday">⚪ Someday</option>
+                <option value="archived">🔘 Archived</option>
+              </select>
+            </div>
+            <div class="int-tabs">
+              <button class="int-tab on" data-tab="notes" onclick="intSwitchTab('notes')">Notes</button>
+              <button class="int-tab" data-tab="projects" onclick="intSwitchTab('projects')">Projects</button>
+            </div>
+          </div>
+          <div class="int-pane on" id="intPane-notes">
+            <div><textarea class="note-input" id="intNoteInput" placeholder="Jot anything down… paste a link and it'll also go to Resources."></textarea></div>
+            <div><div class="slabel">Saved Notes</div><div class="cards-grid" id="intCardsGrid"></div></div>
+            <div><div class="slabel">Resources & Links</div><div class="links-list" id="intLinksList"></div><button class="add-link-btn" onclick="intAddLink()">+ Add link</button></div>
+          </div>
+          <div class="int-pane" id="intPane-projects">
+            <div class="proj-list" id="intProjList"></div>
+            <button class="add-proj-btn" onclick="intAddProject()">+ New project</button>
+          </div>
+          <div class="int-save-bar">
+            <span class="saved-flash" id="intSavedFlash">Saved ✓</span>
+            <button class="save-btn" onclick="intSave()">Save</button>
+          </div>
+        </div>
+        <!-- project page -->
+        <div class="proj-page" id="projPage">
+          <div class="proj-page-hdr">
+            <button class="proj-page-back" onclick="closeProjPage()">← Back</button>
+            <span id="projSync"></span>
+            <button class="proj-page-save" onclick="saveProjPage()">Save</button>
+          </div>
+          <div class="proj-page-body" id="projPageBody"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ WELLNESS VIEW ═══ -->
+  <div class="view" id="view-wellness">
+    <div class="wellness-wrap">
+      <div class="well-date-bar">
+        <span id="wellDate">Today</span>
+        <button class="well-reset-btn" onclick="wellReset()">↺ Reset Day</button>
+      </div>
+      <div class="well-progress-wrap"><div class="well-progress-fill" id="wellProgFill" style="width:0%"></div></div>
+      <div class="well-progress-label" id="wellProgLabel">0 / 0 done</div>
+      <div id="wellChecklist"></div>
+      <div class="well-done-msg" id="wellDoneMsg">🌿 Full day complete. Well done.</div>
+    </div>
+  </div>
+
+  <!-- ═══ FOCUS VIEW ═══ -->
+  <div class="view on" id="view-focus">
+    <div class="focus-wrap">
+
+      <!-- Pomodoro -->
+      <div class="pom-card">
+        <div class="pom-stripe"></div>
+        <div class="pom-bar">
+          <div class="pom-modes">
+            <button class="pom-mode on" data-mode="work" onclick="pomSetMode('work')">Focus</button>
+            <button class="pom-mode" data-mode="short" onclick="pomSetMode('short')">Short</button>
+            <button class="pom-mode" data-mode="long" onclick="pomSetMode('long')">Long</button>
+          </div>
+          <div class="pom-center">
+            <div class="pom-time" id="pomTime">25:00</div>
+            <div class="pom-sub" id="pomSub">Ready to focus?</div>
+          </div>
+          <div class="pom-actions">
+            <button class="pom-start" id="pomStartBtn" onclick="pomToggle()">Start</button>
+            <button class="pom-reset" onclick="pomReset()">↺</button>
+          </div>
+          <div class="pom-count">🍅 <span id="pomCount">0</span></div>
+        </div>
+        <div class="pom-prog-line"><div class="pom-prog-fill" id="pomProgFill" style="width:0%"></div></div>
+      </div>
+
+      <!-- Tasks -->
+      <div class="focus-card">
+        <div class="focus-card-stripe" style="background:linear-gradient(90deg,#7DBF8E,#A8D5A2)"></div>
+        <div class="focus-card-hdr">
+          <span class="focus-card-title">📋 Tasks</span>
+          <button class="focus-clear-btn" onclick="taskClearDone()">Clear done</button>
+        </div>
+        <div class="focus-input-row">
+          <input class="focus-input" id="taskInput" placeholder="Add a task…" onkeydown="if(event.key==='Enter') taskAdd()">
+          <button class="focus-add-btn" onclick="taskAdd()">+</button>
+        </div>
+        <div class="focus-list" id="taskList"></div>
+      </div>
+
+      <!-- Weekly Goals -->
+      <div class="focus-card">
+        <div class="focus-card-stripe" style="background:linear-gradient(90deg,#9B84C4,#C4AEE8)"></div>
+        <div class="focus-card-hdr">
+          <span class="focus-card-title">🌱 Weekly Goals</span>
+        </div>
+        <div class="week-prog-row">
+          <div class="week-prog-bar"><div class="week-prog-fill" id="weekProgFill" style="width:0%"></div></div>
+          <span class="week-prog-label" id="weekProgLabel">0 achieved</span>
+        </div>
+        <div class="goal-input-row">
+          <input class="goal-input" id="goalInput" placeholder="Set a goal for this week…" onkeydown="if(event.key==='Enter') goalAdd()">
+          <button class="goal-add-btn" onclick="goalAdd()">+</button>
+        </div>
+        <div id="goalList"></div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /app-body -->
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-btn" data-view="interests" onclick="switchView('interests')">
+    <span class="nicon">🗂</span><span class="nlabel">Interests</span>
+  </button>
+  <button class="nav-btn" data-view="wellness" onclick="switchView('wellness')">
+    <span class="nicon">🌿</span><span class="nlabel">Wellness</span>
+  </button>
+  <button class="nav-btn on" data-view="focus" onclick="switchView('focus')">
+    <span class="nicon">🍅</span><span class="nlabel">Focus</span>
+  </button>
+</nav>
+
 <script>
-// ─── CONFIG ───────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════════
 const SB_URL = 'https://dvwdiqfkbooazvdjuzxg.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR2d2RpcWZrYm9vYXp2ZGp1enhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxOTQ3NjAsImV4cCI6MjA5NTc3MDc2MH0.sExMY6IZzJGcdtP-JKQJMkiSgqkuizMwE5nKNog6QOo';
-const REC_ID = 'main';
+const SB_HDR = { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' };
 const USER_ID = 'arindam';
 
-// ─── STATE (single source of truth) ──────────────────────────────────────────
-let interests = [];   // all data lives here
-let selId = null;     // selected interest id
-let projId = null;    // open project id
-let dirty = false;
-
-// ─── HELPERS ─────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════
 const uid = () => Math.random().toString(36).slice(2, 10);
 const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-const getSel = () => interests.find(i => i.id === selId);
-const getProj = () => getSel()?.projects?.find(p => p.id === projId);
 const isMobile = () => window.innerWidth <= 640;
-const today = () => new Date().toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'});
-const mkInterest = () => ({ id: uid(), name: 'New Interest', status: 'next', noteCards: [], links: [], projects: [] });
-const mkProject = () => ({ id: uid(), name: 'New Project', blocks: [] });
-const mkBlock = type => {
-  const b = { id: uid(), type };
-  if (type === 'text' || type === 'heading') b.text = '';
-  if (type === 'checklist') b.items = [];
-  if (type === 'link') { b.url = ''; b.title = ''; }
-  return b;
-};
+const todayStr = () => new Date().toISOString().slice(0,10);
 const URL_RE = () => /https?:\/\/[^\s"'<>]+/g;
 
-function markDirty() { dirty = true; }
+function sync(msg) { document.getElementById('globalSync').textContent = msg; }
+function flashSaved(id) { const el = document.getElementById(id); el.classList.add('on'); setTimeout(() => el.classList.remove('on'), 2000); }
 
-// ─── SUPABASE ─────────────────────────────────────────────────────────────────
-const SB_HEADERS = { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' };
+// ═══════════════════════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════════════════════
+function switchView(view) {
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'view-' + view));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('on', b.dataset.view === view));
+  if (view === 'wellness') wellRender();
+  if (view === 'focus') { taskRender(); goalRender(); }
+}
 
-async function dbLoad() {
-  const res = await fetch(`${SB_URL}/rest/v1/interests?id=eq.${REC_ID}&user_id=eq.${USER_ID}`, { headers: SB_HEADERS });
+// ═══════════════════════════════════════════════════════════
+// SUPABASE — INTERESTS
+// ═══════════════════════════════════════════════════════════
+let interests = [];
+let intSelId = null;
+let intProjId = null;
+let intDirty = false;
+
+async function intDbLoad() {
+  const res = await fetch(`${SB_URL}/rest/v1/interests?id=eq.main&user_id=eq.${USER_ID}`, { headers: SB_HDR });
   const rows = await res.json();
   return rows[0]?.data || null;
 }
 
-async function dbSave() {
-  const sync = document.getElementById('syncStatus');
-  sync.textContent = 'Saving…';
+async function intDbSave() {
+  sync('Saving…');
   const res = await fetch(`${SB_URL}/rest/v1/interests`, {
-    method: 'POST', headers: SB_HEADERS,
-    body: JSON.stringify({ id: REC_ID, user_id: USER_ID, data: interests, updated_at: new Date().toISOString() })
+    method: 'POST', headers: SB_HDR,
+    body: JSON.stringify({ id: 'main', user_id: USER_ID, data: interests, updated_at: new Date().toISOString() })
   });
-  if (res.ok) {
-    sync.textContent = 'Synced ✓';
-    setTimeout(() => sync.textContent = '', 2000);
-  } else {
-    sync.textContent = '⚠️ Save failed';
-    console.error('Save failed:', res.status, await res.text());
-  }
+  sync(res.ok ? '' : '⚠️ Save failed');
+  if (!res.ok) console.error('interests save failed', res.status);
 }
 
-// ─── BOOT ─────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// SUPABASE — WELLNESS
+// ═══════════════════════════════════════════════════════════
+let wellnessData = { checklistState: {}, tasks: [], goals: [] };
+
+async function wellDbLoad() {
+  const res = await fetch(`${SB_URL}/rest/v1/wellness?id=eq.main&user_id=eq.${USER_ID}`, { headers: SB_HDR });
+  const rows = await res.json();
+  return rows[0]?.data || null;
+}
+
+async function wellDbSave() {
+  sync('Saving…');
+  const res = await fetch(`${SB_URL}/rest/v1/wellness`, {
+    method: 'POST', headers: SB_HDR,
+    body: JSON.stringify({ id: 'main', user_id: USER_ID, data: wellnessData, updated_at: new Date().toISOString() })
+  });
+  sync(res.ok ? '' : '⚠️ Save failed');
+  if (!res.ok) console.error('wellness save failed', res.status);
+}
+
+// ═══════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════
 async function boot() {
-  setStatus('⏳ Loading…');
-  const saved = await dbLoad();
-  if (saved && saved.length > 0) {
-    // migrate old shape to new
-    interests = saved.map(item => ({
-      id: item.id,
-      name: item.name || 'Untitled',
-      status: item.status || 'next',
+  sync('Loading…');
+
+  // load interests
+  const savedInt = await intDbLoad();
+  if (savedInt && savedInt.length > 0) {
+    interests = savedInt.map(item => ({
+      id: item.id, name: item.name || 'Untitled', status: item.status || 'next',
       noteCards: item.noteCards || (item.notes ? [{ id: uid(), text: item.notes }] : []),
       links: (item.links || []).map(l => typeof l === 'string' ? { id: uid(), url: l, title: '' } : l),
       projects: (item.projects || []).map(p => ({ id: p.id, name: p.name || 'Untitled', blocks: p.blocks || [] }))
     }));
   } else {
-    interests = ['Cooking','Baking','Embroidery','Pottery','Hiking'].map(name => ({ ...mkInterest(), name }));
-    await dbSave();
+    interests = ['Cooking','Baking','Embroidery','Pottery','Hiking'].map(name => ({
+      id: uid(), name, status: 'next', noteCards: [], links: [], projects: []
+    }));
+    await intDbSave();
   }
-  setStatus('');
-  renderList();
-  // restore last selected
-  const lastId = localStorage.getItem('lastSelId');
-  if (lastId && interests.find(i => i.id === lastId)) openInterest(lastId);
+  renderIntList();
+
+  // load wellness
+  const savedWell = await wellDbLoad();
+  if (savedWell) {
+    wellnessData = { checklistState: savedWell.checklistState || {}, tasks: savedWell.tasks || [], goals: savedWell.goals || [] };
+  } else {
+    wellnessData = { checklistState: {}, tasks: [], goals: [] };
+    await wellDbSave();
+  }
+
+  sync('');
+
+  // restore last selected interest
+  const lastId = localStorage.getItem('lastIntId');
+  if (lastId && interests.find(i => i.id === lastId)) intOpen(lastId);
 }
 
-function setStatus(msg) { document.getElementById('emptyState').innerHTML = msg ? `<div class="eicon">⏳</div><p>${msg}</p>` : '<div class="eicon">✦</div><p>Select an interest or add a new one</p>'; }
-
-// ─── INTEREST LIST ────────────────────────────────────────────────────────────
-function renderList() {
-  const el = document.getElementById('interestList');
-  el.innerHTML = '';
+// ═══════════════════════════════════════════════════════════
+// INTERESTS — LIST
+// ═══════════════════════════════════════════════════════════
+function renderIntList() {
+  const el = document.getElementById('intList'); el.innerHTML = '';
   const order = { active:0, next:1, someday:2, archived:3 };
   [...interests].sort((a,b) => order[a.status]-order[b.status]).forEach(item => {
     const div = document.createElement('div');
-    div.className = 'interest-item' + (item.id === selId ? ' active' : '');
-    div.innerHTML = `<span class="dot ${item.status}"></span><span class="iname">${esc(item.name)}</span><button class="idel" onclick="deleteInterest('${item.id}',event)">×</button>`;
-    div.addEventListener('click', () => openInterest(item.id));
+    div.className = 'int-item' + (item.id === intSelId ? ' on' : '');
+    div.innerHTML = `<span class="dot ${item.status}"></span><span class="iname">${esc(item.name)}</span><button class="idel" onclick="intDelete('${item.id}',event)">×</button>`;
+    div.addEventListener('click', () => intOpen(item.id));
     el.appendChild(div);
   });
 }
 
 function addInterest() {
-  const item = mkInterest();
+  const item = { id: uid(), name: 'New Interest', status: 'next', noteCards: [], links: [], projects: [] };
   interests.unshift(item);
-  dbSave();
-  openInterest(item.id);
-  setTimeout(() => { document.getElementById('iTitle').select(); }, 50);
+  intDbSave();
+  intOpen(item.id);
+  setTimeout(() => { document.getElementById('intTitleInput').select(); }, 50);
 }
 
-function deleteInterest(id, e) {
+function intDelete(id, e) {
   e.stopPropagation();
   if (!confirm('Delete this interest?')) return;
   interests = interests.filter(i => i.id !== id);
-  if (selId === id) { selId = null; showEmpty(); }
-  dbSave(); renderList();
+  if (intSelId === id) { intSelId = null; intShowEmpty(); }
+  intDbSave(); renderIntList();
 }
 
-function showEmpty() {
-  document.getElementById('emptyState').style.display = 'flex';
-  document.getElementById('detailPanel').style.display = 'none';
-  if (isMobile()) document.getElementById('leftPanel').classList.remove('hidden');
+function intShowEmpty() {
+  document.getElementById('intEmpty').style.display = 'flex';
+  document.getElementById('intDetail').style.display = 'none';
+  if (isMobile()) document.getElementById('intLeft').classList.remove('hidden');
 }
 
-function goBack() {
-  if (dirty) saveInterest(true);
-  selId = null; showEmpty(); renderList();
+function intGoBack() {
+  if (intDirty) intSave(true);
+  intSelId = null; intShowEmpty(); renderIntList();
 }
 
-// ─── OPEN INTEREST ────────────────────────────────────────────────────────────
-// This is the ONLY place we read from state into the DOM for the interest detail
-function openInterest(id) {
-  if (dirty && selId && selId !== id) saveInterest(true);
-  selId = id; dirty = false;
-  localStorage.setItem('lastSelId', id);
-  renderList();
+// ═══════════════════════════════════════════════════════════
+// INTERESTS — OPEN
+// ═══════════════════════════════════════════════════════════
+function intOpen(id) {
+  if (intDirty && intSelId && intSelId !== id) intSave(true);
+  intSelId = id; intDirty = false;
+  localStorage.setItem('lastIntId', id);
+  renderIntList();
 
-  const item = getSel(); if (!item) return;
+  const item = interests.find(i => i.id === id); if (!item) return;
+  document.getElementById('intEmpty').style.display = 'none';
+  document.getElementById('intDetail').style.display = 'flex';
+  document.getElementById('intDetail').style.flexDirection = 'column';
+  if (isMobile()) document.getElementById('intLeft').classList.add('hidden');
 
-  document.getElementById('emptyState').style.display = 'none';
-  document.getElementById('detailPanel').style.display = 'flex';
-  document.getElementById('detailPanel').style.flexDirection = 'column';
-  if (isMobile()) document.getElementById('leftPanel').classList.add('hidden');
+  document.getElementById('intTitleInput').value = item.name;
+  document.getElementById('intStatusSel').value = item.status;
+  document.getElementById('intNoteInput').value = '';
 
-  document.getElementById('iTitle').value = item.name;
-  document.getElementById('iStatus').value = item.status;
-  document.getElementById('noteInput').value = '';
-
-  switchTab('notes'); // this renders cards, links, projects
+  intSwitchTab('notes');
 }
 
-// ─── TABS ─────────────────────────────────────────────────────────────────────
-function switchTab(tab) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
-  document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('on', p.id === 'pane-' + tab));
-  // always re-render from state when switching tabs
-  const item = getSel(); if (!item) return;
-  if (tab === 'notes') { renderCards(); renderLinks(); }
-  if (tab === 'projects') renderProjects();
+function intGetSel() { return interests.find(i => i.id === intSelId); }
+function intMarkDirty() { intDirty = true; }
+
+// ═══════════════════════════════════════════════════════════
+// INTERESTS — TABS
+// ═══════════════════════════════════════════════════════════
+function intSwitchTab(tab) {
+  document.querySelectorAll('.int-tab').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  document.querySelectorAll('.int-pane').forEach(p => p.classList.toggle('on', p.id === 'intPane-' + tab));
+  const item = intGetSel(); if (!item) return;
+  if (tab === 'notes') { intRenderCards(); intRenderLinks(); }
+  if (tab === 'projects') intRenderProjects();
 }
 
-// ─── NOTES: CARDS ─────────────────────────────────────────────────────────────
-// Renders directly from state — never reads from DOM
-function renderCards() {
-  const item = getSel(); if (!item) return;
-  const grid = document.getElementById('cardsGrid');
-  grid.innerHTML = '';
+// ═══════════════════════════════════════════════════════════
+// INTERESTS — NOTES
+// ═══════════════════════════════════════════════════════════
+function intRenderCards() {
+  const item = intGetSel(); if (!item) return;
+  const grid = document.getElementById('intCardsGrid'); grid.innerHTML = '';
   item.noteCards.forEach((card, i) => {
     const div = document.createElement('div'); div.className = 'note-card';
     const del = document.createElement('button'); del.className = 'card-del'; del.textContent = '×';
-    del.onclick = () => { item.noteCards.splice(i, 1); dbSave(); renderCards(); };
+    del.onclick = () => { item.noteCards.splice(i, 1); intDbSave(); intRenderCards(); };
     const ta = document.createElement('textarea');
     ta.value = card.text;
-    // write directly to state on input — no DOM reading needed at save time
-    ta.oninput = () => { card.text = ta.value; markDirty(); };
+    ta.oninput = () => { card.text = ta.value; intMarkDirty(); };
     div.appendChild(del); div.appendChild(ta);
     grid.appendChild(div);
   });
 }
 
-function saveNote() {
-  const item = getSel(); if (!item) return;
-  const ta = document.getElementById('noteInput');
+function intSaveNote() {
+  const item = intGetSel(); if (!item) return;
+  const ta = document.getElementById('intNoteInput');
   const text = ta.value.trim(); if (!text) return;
   // extract links
   const urls = text.match(URL_RE()) || [];
@@ -449,102 +709,105 @@ function saveNote() {
     const clean = url.replace(/[),.\]]+$/, '');
     if (!item.links.find(l => l.url === clean)) item.links.push({ id: uid(), url: clean, title: '' });
   });
-  // add card with full text (including link)
   item.noteCards.unshift({ id: uid(), text });
   ta.value = '';
-  dbSave();
-  renderCards();
-  renderLinks();
+  intDbSave(); intRenderCards(); intRenderLinks();
 }
 
-// ─── NOTES: LINKS ─────────────────────────────────────────────────────────────
-function renderLinks() {
-  const item = getSel(); if (!item) return;
-  const list = document.getElementById('linksList');
-  list.innerHTML = '';
+// ═══════════════════════════════════════════════════════════
+// INTERESTS — LINKS
+// ═══════════════════════════════════════════════════════════
+function intRenderLinks() {
+  const item = intGetSel(); if (!item) return;
+  const list = document.getElementById('intLinksList'); list.innerHTML = '';
   item.links.forEach((lk, i) => {
     const row = document.createElement('div'); row.className = 'link-row';
     const inner = document.createElement('div'); inner.className = 'link-inner';
-    const titleEl = document.createElement('input'); titleEl.className = 'link-title';
+    const titleEl = document.createElement('input'); titleEl.className = 'link-title-inp';
     titleEl.value = lk.title; titleEl.placeholder = 'Title (optional)';
-    titleEl.oninput = () => { lk.title = titleEl.value; markDirty(); };
+    titleEl.oninput = () => { lk.title = titleEl.value; intMarkDirty(); };
     inner.appendChild(titleEl);
     if (lk.url && lk.url.startsWith('http')) {
-      const a = document.createElement('a'); a.className = 'link-url-display';
+      const a = document.createElement('a'); a.className = 'link-url-a';
       a.href = lk.url; a.target = '_blank'; a.textContent = lk.url;
       inner.appendChild(a);
     } else {
-      const urlEl = document.createElement('input'); urlEl.className = 'link-url-input';
+      const urlEl = document.createElement('input'); urlEl.className = 'link-url-inp';
       urlEl.value = lk.url; urlEl.placeholder = 'https://…';
-      urlEl.oninput = () => { lk.url = urlEl.value; markDirty(); if (lk.url.startsWith('http') && lk.url.length > 10) renderLinks(); };
+      urlEl.oninput = () => { lk.url = urlEl.value; intMarkDirty(); if (lk.url.startsWith('http') && lk.url.length > 10) intRenderLinks(); };
       inner.appendChild(urlEl);
     }
     const del = document.createElement('button'); del.className = 'link-del'; del.textContent = '×';
-    del.onclick = () => { item.links.splice(i, 1); dbSave(); renderLinks(); };
+    del.onclick = () => { item.links.splice(i, 1); intDbSave(); intRenderLinks(); };
     row.appendChild(inner); row.appendChild(del);
     list.appendChild(row);
   });
 }
 
-function addLink() {
-  const item = getSel(); if (!item) return;
+function intAddLink() {
+  const item = intGetSel(); if (!item) return;
   item.links.push({ id: uid(), url: '', title: '' });
-  dbSave(); renderLinks();
-  setTimeout(() => { const inputs = document.getElementById('linksList').querySelectorAll('.link-url-input'); if (inputs.length) inputs[inputs.length-1].focus(); }, 30);
+  intDbSave(); intRenderLinks();
+  setTimeout(() => { const ins = document.getElementById('intLinksList').querySelectorAll('.link-url-inp'); if (ins.length) ins[ins.length-1].focus(); }, 30);
 }
 
-// ─── PROJECTS LIST ────────────────────────────────────────────────────────────
-function renderProjects() {
-  const item = getSel(); if (!item) return;
-  const list = document.getElementById('projList');
-  list.innerHTML = '';
+// ═══════════════════════════════════════════════════════════
+// INTERESTS — PROJECTS LIST
+// ═══════════════════════════════════════════════════════════
+function intRenderProjects() {
+  const item = intGetSel(); if (!item) return;
+  const list = document.getElementById('intProjList'); list.innerHTML = '';
   item.projects.forEach(proj => {
     const row = document.createElement('div'); row.className = 'proj-row';
-    row.innerHTML = `<span class="proj-icon">📄</span><span class="proj-name">${esc(proj.name)}</span><span class="proj-meta">${(proj.blocks||[]).length} blocks</span><span class="proj-arrow">→</span><button class="proj-del" onclick="deleteProject('${proj.id}',event)">×</button>`;
+    row.innerHTML = `<span>📄</span><span class="pname">${esc(proj.name)}</span><span class="pmeta">${(proj.blocks||[]).length} blocks</span><span class="parr">→</span><button class="proj-del-btn" onclick="intDeleteProject('${proj.id}',event)">×</button>`;
     row.addEventListener('click', () => openProjPage(proj.id));
     list.appendChild(row);
   });
 }
 
-function addProject() {
-  const item = getSel(); if (!item) return;
-  if (dirty) saveInterest(true);
-  const proj = mkProject();
+function intAddProject() {
+  const item = intGetSel(); if (!item) return;
+  if (intDirty) intSave(true);
+  const proj = { id: uid(), name: 'New Project', blocks: [] };
   item.projects.push(proj);
-  dbSave(); renderProjects();
+  intDbSave(); intRenderProjects();
   openProjPage(proj.id);
 }
 
-function deleteProject(pid, e) {
+function intDeleteProject(pid, e) {
   e.stopPropagation();
-  const item = getSel(); if (!item) return;
+  const item = intGetSel(); if (!item) return;
   if (!confirm('Delete this project?')) return;
   item.projects = item.projects.filter(p => p.id !== pid);
-  dbSave(); renderProjects();
+  intDbSave(); intRenderProjects();
 }
 
-// ─── SAVE INTEREST ────────────────────────────────────────────────────────────
-// Only saves name, status, and links (cards write directly to state via oninput)
-async function saveInterest(silent) {
-  const item = getSel(); if (!item) return;
-  item.name = document.getElementById('iTitle').value || 'Untitled';
-  item.status = document.getElementById('iStatus').value;
-  // collect link titles from DOM (urls already in state)
-  document.getElementById('linksList').querySelectorAll('.link-row').forEach((row, i) => {
-    if (item.links[i]) item.links[i].title = row.querySelector('.link-title')?.value || '';
-  });
+// ═══════════════════════════════════════════════════════════
+// INTERESTS — SAVE
+// ═══════════════════════════════════════════════════════════
+async function intSave(silent) {
+  const item = intGetSel(); if (!item) return;
+  item.name = document.getElementById('intTitleInput').value || 'Untitled';
+  item.status = document.getElementById('intStatusSel').value;
   // save note textarea if has content
-  const notesTa = document.getElementById('noteInput');
-  if (notesTa.value.trim()) saveNote();
-  await dbSave();
-  dirty = false; renderList();
-  if (!silent) { const m = document.getElementById('savedMsg'); m.classList.add('on'); setTimeout(() => m.classList.remove('on'), 2000); }
+  const ta = document.getElementById('intNoteInput');
+  if (ta.value.trim()) intSaveNote();
+  await intDbSave();
+  intDirty = false; renderIntList();
+  if (!silent) flashSaved('intSavedFlash');
 }
 
-// ─── PROJECT PAGE ─────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// PROJECT PAGE
+// ═══════════════════════════════════════════════════════════
+function intGetProj() {
+  const item = intGetSel(); if (!item) return null;
+  return item.projects.find(p => p.id === intProjId) || null;
+}
+
 function openProjPage(pid) {
-  projId = pid;
-  const proj = getProj(); if (!proj) return;
+  intProjId = pid;
+  const proj = intGetProj(); if (!proj) return;
   document.getElementById('projPage').classList.add('on');
   renderProjPage();
 }
@@ -552,51 +815,46 @@ function openProjPage(pid) {
 function closeProjPage() {
   saveProjPage();
   document.getElementById('projPage').classList.remove('on');
-  projId = null;
-  renderProjects();
+  intProjId = null; intRenderProjects();
 }
 
 function renderProjPage() {
-  const proj = getProj(); if (!proj) return;
-  const body = document.getElementById('projPageBody');
-  body.innerHTML = '';
-
-  const titleEl = document.createElement('input'); titleEl.className = 'proj-title';
+  const proj = intGetProj(); if (!proj) return;
+  const body = document.getElementById('projPageBody'); body.innerHTML = '';
+  const titleEl = document.createElement('input'); titleEl.className = 'proj-title-inp';
   titleEl.value = proj.name; titleEl.placeholder = 'Project name…';
   titleEl.oninput = () => { proj.name = titleEl.value; };
   body.appendChild(titleEl);
-
-  const blocksEl = document.createElement('div'); blocksEl.id = 'blocksEl';
+  const blocksEl = document.createElement('div'); blocksEl.id = 'projBlocksEl';
   body.appendChild(blocksEl);
-  renderBlocks();
-
+  renderProjBlocks();
   const addRow = document.createElement('div'); addRow.className = 'add-block-row';
-  addRow.innerHTML = `
-    <button class="add-block" onclick="addBlock('text')">✏️ Text</button>
-    <button class="add-block" onclick="addBlock('heading')">H Heading</button>
-    <button class="add-block" onclick="addBlock('checklist')">☑ Checklist</button>
-    <button class="add-block" onclick="addBlock('link')">🔗 Link</button>
-  `;
+  ['text','heading','checklist','link'].forEach(type => {
+    const labels = { text:'✏️ Text', heading:'H Heading', checklist:'☑ Checklist', link:'🔗 Link' };
+    const btn = document.createElement('button'); btn.className = 'add-block-btn';
+    btn.textContent = labels[type]; btn.onclick = () => projAddBlock(type);
+    addRow.appendChild(btn);
+  });
   body.appendChild(addRow);
 }
 
-function renderBlocks() {
-  const proj = getProj(); if (!proj) return;
-  const el = document.getElementById('blocksEl'); if (!el) return;
+function renderProjBlocks() {
+  const proj = intGetProj(); if (!proj) return;
+  const el = document.getElementById('projBlocksEl'); if (!el) return;
   el.innerHTML = '';
   proj.blocks.forEach((bl, i) => {
     const wrap = document.createElement('div'); wrap.className = 'block-wrap';
     const handle = document.createElement('span'); handle.className = 'block-handle'; handle.textContent = '⠿';
     const body = document.createElement('div'); body.className = 'block-body';
-    const del = document.createElement('button'); del.className = 'block-del'; del.textContent = '×';
-    del.onclick = () => { proj.blocks.splice(i, 1); renderBlocks(); };
-    renderBlock(bl, body);
+    const del = document.createElement('button'); del.className = 'block-del-btn'; del.textContent = '×';
+    del.onclick = () => { proj.blocks.splice(i, 1); renderProjBlocks(); };
+    renderProjBlock(bl, body);
     wrap.appendChild(handle); wrap.appendChild(body); wrap.appendChild(del);
     el.appendChild(wrap);
   });
 }
 
-function renderBlock(bl, container) {
+function renderProjBlock(bl, container) {
   container.innerHTML = '';
   if (bl.type === 'text') {
     const ta = document.createElement('textarea'); ta.className = 'b-text';
@@ -610,78 +868,313 @@ function renderBlock(bl, container) {
     container.appendChild(inp);
   } else if (bl.type === 'checklist') {
     const div = document.createElement('div'); div.className = 'b-checklist';
-    (bl.items || []).forEach((ci, ci_i) => {
+    (bl.items||[]).forEach((ci, ci_i) => {
       const row = document.createElement('div'); row.className = 'b-check-row';
       const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = ci.done;
       const txt = document.createElement('input'); txt.type = 'text'; txt.value = ci.text;
       txt.className = ci.done ? 'checked' : '';
       cb.onchange = () => { ci.done = cb.checked; txt.className = ci.done ? 'checked' : ''; };
       txt.oninput = () => { ci.text = txt.value; };
-      const rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = '×';
-      rm.onclick = () => { bl.items.splice(ci_i, 1); renderBlock(bl, container); };
-      row.appendChild(cb); row.appendChild(txt); row.appendChild(rm);
-      div.appendChild(row);
+      const rm = document.createElement('button'); rm.className = 'brm'; rm.textContent = '×';
+      rm.onclick = () => { bl.items.splice(ci_i, 1); renderProjBlock(bl, container); };
+      row.appendChild(cb); row.appendChild(txt); row.appendChild(rm); div.appendChild(row);
     });
-    const addBtn = document.createElement('button'); addBtn.className = 'add-check'; addBtn.textContent = '+ Add item';
-    addBtn.onclick = () => { bl.items.push({ id: uid(), text: '', done: false }); renderBlock(bl, container); setTimeout(() => { const rows = container.querySelectorAll('.b-check-row input[type=text]'); if (rows.length) rows[rows.length-1].focus(); }, 20); };
+    const addBtn = document.createElement('button'); addBtn.className = 'add-check-btn'; addBtn.textContent = '+ Add item';
+    addBtn.onclick = () => {
+      bl.items.push({ id: uid(), text: '', done: false }); renderProjBlock(bl, container);
+      setTimeout(() => { const rows = container.querySelectorAll('.b-check-row input[type=text]'); if (rows.length) rows[rows.length-1].focus(); }, 20);
+    };
     div.appendChild(addBtn); container.appendChild(div);
   } else if (bl.type === 'link') {
     const box = document.createElement('div'); box.className = 'b-link-box';
-    const inner = document.createElement('div'); inner.className = 'link-inner';
-    const titleEl = document.createElement('input'); titleEl.className = 'b-link-title';
+    const inner = document.createElement('div'); inner.className = 'b-link-inner';
+    const titleEl = document.createElement('input'); titleEl.className = 'b-link-title-inp';
     titleEl.value = bl.title; titleEl.placeholder = 'Title (optional)';
     titleEl.oninput = () => { bl.title = titleEl.value; };
     inner.appendChild(titleEl);
     if (bl.url && bl.url.startsWith('http')) {
-      const a = document.createElement('a'); a.className = 'b-link-display';
-      a.href = bl.url; a.target = '_blank'; a.textContent = bl.url;
+      const a = document.createElement('a'); a.className = 'b-link-a'; a.href = bl.url; a.target = '_blank'; a.textContent = bl.url;
       inner.appendChild(a);
     } else {
-      const urlEl = document.createElement('input'); urlEl.className = 'b-link-url';
+      const urlEl = document.createElement('input'); urlEl.className = 'b-link-url-inp';
       urlEl.value = bl.url; urlEl.placeholder = 'https://…';
-      urlEl.oninput = () => { bl.url = urlEl.value; if (bl.url.startsWith('http') && bl.url.length > 10) renderBlock(bl, container); };
+      urlEl.oninput = () => { bl.url = urlEl.value; if (bl.url.startsWith('http') && bl.url.length > 10) renderProjBlock(bl, container); };
       inner.appendChild(urlEl);
     }
-    const rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = '×';
-    rm.onclick = () => { const proj = getProj(); if (!proj) return; proj.blocks = proj.blocks.filter(b => b.id !== bl.id); renderBlocks(); };
+    const rm = document.createElement('button'); rm.className = 'brm'; rm.textContent = '×';
+    rm.onclick = () => { const p = intGetProj(); if (p) { p.blocks = p.blocks.filter(b => b.id !== bl.id); renderProjBlocks(); } };
     box.appendChild(inner); box.appendChild(rm); container.appendChild(box);
   }
 }
 
-function addBlock(type) {
-  const proj = getProj(); if (!proj) return;
-  proj.blocks.push(mkBlock(type));
-  renderBlocks();
-  setTimeout(() => {
-    const inputs = document.getElementById('blocksEl')?.querySelectorAll('input[type=text], textarea');
-    if (inputs?.length) inputs[inputs.length-1].focus();
-  }, 30);
+function projAddBlock(type) {
+  const proj = intGetProj(); if (!proj) return;
+  const bl = { id: uid(), type };
+  if (type === 'text' || type === 'heading') bl.text = '';
+  if (type === 'checklist') bl.items = [];
+  if (type === 'link') { bl.url = ''; bl.title = ''; }
+  proj.blocks.push(bl); renderProjBlocks();
+  setTimeout(() => { const ins = document.getElementById('projBlocksEl')?.querySelectorAll('input[type=text],textarea'); if (ins?.length) ins[ins.length-1].focus(); }, 30);
 }
 
 function autoResize(ta) { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }
 
 async function saveProjPage() {
-  const proj = getProj(); if (!proj) return;
-  const titleEl = document.querySelector('.proj-title');
-  if (titleEl) proj.name = titleEl.value;
-  const sync = document.getElementById('projSyncStatus');
-  sync.textContent = 'Saving…';
-  await dbSave();
-  sync.textContent = 'Saved ✓';
-  setTimeout(() => sync.textContent = '', 2000);
+  const proj = intGetProj(); if (!proj) return;
+  const titleEl = document.querySelector('.proj-title-inp'); if (titleEl) proj.name = titleEl.value;
+  const sync = document.getElementById('projSync'); sync.textContent = 'Saving…';
+  await intDbSave();
+  sync.textContent = 'Saved ✓'; setTimeout(() => sync.textContent = '', 2000);
 }
 
-// ─── KEYBOARD ─────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// WELLNESS — CHECKLIST DATA
+// ═══════════════════════════════════════════════════════════
+const WELL_BLOCKS = [
+  { emoji:"🌅", title:"Morning", time:"9:30 am", color:"#E8B86D", items:["2 glasses of water immediately on waking 💧💧","20 min morning meditation 🧘"] },
+  { emoji:"🎵", title:"Music & Poetry Ritual", time:"10 am", color:"#B87A4A", items:["15 mins — start with a singing practice 🎤","1 hour — write or journal, then learn to write; record your purpose in your notes ✍️","2 hours — free reading and music practice 📖🎸"] },
+  { emoji:"☀️", title:"Mid-Morning", time:"12 pm", color:"#F2A65A", items:["2 glasses of water 💧💧","A cup of coffee ☕","Protein-first breakfast — eggs, paneer, or curd 🍳"] },
+  { emoji:"🍽️", title:"Lunch", time:"2:30 pm", color:"#7DBF8E", items:["1–2 glasses of water before eating 💧💧","Include dal/sabzi, curd, and salad alongside carbs","10–15 min walk after lunch 🎧 audiobook on"] },
+  { emoji:"🌆", title:"Evening", time:"6 pm", color:"#9B84C4", items:["4 glasses of water 💧💧💧💧","Coffee + nuts ☕🥜 (fuel for the late night)"] },
+  { emoji:"🍽️", title:"Dinner", time:"9 – 10 pm", color:"#E07B7B", items:["1–2 glasses of water before eating 💧💧","Cook a meal and feed Frost 🐱","Nothing heavy after 10 pm","Call someone you love. Tell them one real thing about your day or play something with them 🤍"] },
+  { emoji:"📖", title:"Wind Down", time:"1:30 am", color:"#6A8FAF", items:["Read a book — paper preferred, no screens 30 mins before bed","20 min wind down meditation — observe your body 🧘","Sleep by 2:30 am — protect your 7 hours"] }
+];
+
+// ═══════════════════════════════════════════════════════════
+// WELLNESS — RENDER
+// ═══════════════════════════════════════════════════════════
+function wellRender() {
+  const today = todayStr();
+  const state = wellnessData.checklistState[today] || {};
+  const container = document.getElementById('wellChecklist'); container.innerHTML = '';
+  let total = 0, done = 0;
+
+  WELL_BLOCKS.forEach((block, bi) => {
+    const blockEl = document.createElement('div'); blockEl.className = 'well-block';
+    const hdr = document.createElement('div'); hdr.className = 'well-block-hdr';
+    hdr.innerHTML = `<div class="well-block-dot" style="background:${block.color}"></div><div class="well-block-title">${block.emoji} ${block.title}</div><div class="well-block-time">${block.time}</div>`;
+    blockEl.appendChild(hdr);
+
+    block.items.forEach((text, ii) => {
+      const key = `b${bi}_i${ii}`;
+      const isChecked = !!state[key];
+      total++; if (isChecked) done++;
+      const item = document.createElement('div'); item.className = 'well-item' + (isChecked ? ' checked' : '');
+      item.innerHTML = `<div class="well-checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 3.5L3.5 6.5L9 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="well-item-text">${text}</div>`;
+      item.onclick = () => {
+        wellnessData.checklistState[today] = wellnessData.checklistState[today] || {};
+        wellnessData.checklistState[today][key] = !wellnessData.checklistState[today][key];
+        wellDbSave(); wellRender();
+      };
+      blockEl.appendChild(item);
+    });
+    container.appendChild(blockEl);
+  });
+
+  const pct = total > 0 ? Math.round((done/total)*100) : 0;
+  document.getElementById('wellProgFill').style.width = pct + '%';
+  document.getElementById('wellProgLabel').textContent = `${done} / ${total} done`;
+  document.getElementById('wellDoneMsg').style.display = (done === total && total > 0) ? 'block' : 'none';
+  document.getElementById('wellDate').textContent = new Date().toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long' });
+}
+
+function wellReset() {
+  if (!confirm('Reset all checkboxes for today?')) return;
+  const today = todayStr();
+  wellnessData.checklistState[today] = {};
+  wellDbSave(); wellRender();
+}
+
+// ═══════════════════════════════════════════════════════════
+// POMODORO (localStorage only — session-based)
+// ═══════════════════════════════════════════════════════════
+const POM_MODES = { work: 25*60, short: 5*60, long: 15*60 };
+const POM_SUBS = { work:'Stay in flow 🌱', short:'Breathe. Stretch.', long:'Rest well 🍵' };
+let pomMode = 'work', pomLeft = POM_MODES.work, pomTotal = POM_MODES.work;
+let pomRunning = false, pomInterval = null;
+let pomCount = parseInt(localStorage.getItem('pom_' + todayStr()) || '0');
+
+function pomSetMode(mode) {
+  if (pomRunning) { clearInterval(pomInterval); pomRunning = false; }
+  pomMode = mode; pomLeft = pomTotal = POM_MODES[mode];
+  document.getElementById('pomStartBtn').textContent = 'Start';
+  document.getElementById('pomSub').textContent = 'Ready?';
+  document.querySelectorAll('.pom-mode').forEach(b => b.classList.toggle('on', b.dataset.mode === mode));
+  pomUpdateDisplay();
+}
+
+function pomToggle() {
+  if (pomRunning) {
+    clearInterval(pomInterval); pomRunning = false;
+    document.getElementById('pomStartBtn').textContent = 'Resume';
+    document.getElementById('pomSub').textContent = 'Paused';
+  } else {
+    pomRunning = true;
+    document.getElementById('pomStartBtn').textContent = 'Pause';
+    document.getElementById('pomSub').textContent = POM_SUBS[pomMode];
+    pomInterval = setInterval(() => {
+      if (pomLeft <= 0) {
+        clearInterval(pomInterval); pomRunning = false;
+        document.getElementById('pomStartBtn').textContent = 'Start';
+        if (pomMode === 'work') {
+          pomCount++; localStorage.setItem('pom_' + todayStr(), pomCount);
+          document.getElementById('pomSub').textContent = '🎉 Session done!';
+        } else { document.getElementById('pomSub').textContent = '✓ Break over'; }
+        pomUpdateDisplay();
+      } else { pomLeft--; pomUpdateDisplay(); }
+    }, 1000);
+  }
+}
+
+function pomReset() {
+  clearInterval(pomInterval); pomRunning = false; pomLeft = pomTotal;
+  document.getElementById('pomStartBtn').textContent = 'Start';
+  document.getElementById('pomSub').textContent = 'Ready?';
+  pomUpdateDisplay();
+}
+
+function pomUpdateDisplay() {
+  const m = String(Math.floor(pomLeft/60)).padStart(2,'0');
+  const s = String(pomLeft%60).padStart(2,'0');
+  document.getElementById('pomTime').textContent = `${m}:${s}`;
+  document.getElementById('pomCount').textContent = pomCount;
+  document.getElementById('pomProgFill').style.width = ((pomTotal-pomLeft)/pomTotal*100) + '%';
+}
+
+// ═══════════════════════════════════════════════════════════
+// TASKS (persists in wellnessData)
+// ═══════════════════════════════════════════════════════════
+function taskAdd() {
+  const inp = document.getElementById('taskInput');
+  const text = inp.value.trim(); if (!text) return;
+  wellnessData.tasks.push({ id: uid(), text, done: false });
+  inp.value = '';
+  wellDbSave(); taskRender();
+}
+
+function taskToggle(id) {
+  const t = wellnessData.tasks.find(t => t.id === id); if (!t) return;
+  t.done = !t.done; wellDbSave(); taskRender();
+}
+
+function taskDelete(id) {
+  wellnessData.tasks = wellnessData.tasks.filter(t => t.id !== id);
+  wellDbSave(); taskRender();
+}
+
+function taskClearDone() {
+  wellnessData.tasks = wellnessData.tasks.filter(t => !t.done);
+  wellDbSave(); taskRender();
+}
+
+function taskRender() {
+  const list = document.getElementById('taskList'); list.innerHTML = '';
+  if (!wellnessData.tasks.length) { list.innerHTML = '<div class="focus-empty">No tasks yet</div>'; return; }
+  wellnessData.tasks.forEach(t => {
+    const el = document.createElement('div'); el.className = 'focus-item' + (t.done ? ' done' : '');
+    const cb = document.createElement('div'); cb.className = 'focus-cb';
+    cb.innerHTML = '<svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 3.5L3.5 6.5L9 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    cb.onclick = () => taskToggle(t.id);
+    const txt = document.createElement('div'); txt.className = 'focus-item-text'; txt.textContent = t.text;
+    const del = document.createElement('button'); del.className = 'focus-item-del'; del.textContent = '×';
+    del.onclick = () => taskDelete(t.id);
+    el.appendChild(cb); el.appendChild(txt); el.appendChild(del);
+    list.appendChild(el);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// WEEKLY GOALS (persists in wellnessData)
+// ═══════════════════════════════════════════════════════════
+function goalAdd() {
+  const inp = document.getElementById('goalInput');
+  const text = inp.value.trim(); if (!text) return;
+  wellnessData.goals.push({ id: uid(), text, pct: 0, achieved: false });
+  inp.value = '';
+  wellDbSave(); goalRender();
+}
+
+function goalSetPct(id, pct) {
+  const g = wellnessData.goals.find(g => g.id === id); if (!g) return;
+  g.pct = pct; g.achieved = pct >= 100;
+  wellDbSave(); goalUpdateHeader();
+  // update just the item's achieved class without full re-render
+  const el = document.getElementById('gitem-' + id); if (!el) return;
+  el.className = 'goal-item' + (g.achieved ? ' achieved' : '');
+  const icon = el.querySelector('.goal-icon'); if (icon) { icon.textContent = g.achieved ? '✓' : '◎'; }
+  const lbl = el.querySelector('.goal-pct'); if (lbl) lbl.textContent = pct + '%';
+}
+
+function goalToggle(id) {
+  const g = wellnessData.goals.find(g => g.id === id); if (!g) return;
+  const newPct = g.achieved ? 0 : 100;
+  g.pct = newPct; g.achieved = !g.achieved;
+  wellDbSave(); goalRender();
+}
+
+function goalDelete(id) {
+  wellnessData.goals = wellnessData.goals.filter(g => g.id !== id);
+  wellDbSave(); goalRender();
+}
+
+function goalUpdateHeader() {
+  const goals = wellnessData.goals;
+  if (!goals.length) { document.getElementById('weekProgFill').style.width = '0%'; document.getElementById('weekProgLabel').textContent = '0 achieved'; return; }
+  const avg = Math.round(goals.reduce((s,g) => s + (g.pct||0), 0) / goals.length);
+  const achieved = goals.filter(g => g.achieved).length;
+  document.getElementById('weekProgFill').style.width = avg + '%';
+  document.getElementById('weekProgLabel').textContent = `${achieved} / ${goals.length} done · ${avg}% avg`;
+}
+
+function goalRender() {
+  const list = document.getElementById('goalList'); list.innerHTML = '';
+  if (!wellnessData.goals.length) { list.innerHTML = '<div class="goal-empty">No goals yet — what do you want to accomplish?</div>'; goalUpdateHeader(); return; }
+  goalUpdateHeader();
+  wellnessData.goals.forEach(g => {
+    const el = document.createElement('div'); el.className = 'goal-item' + (g.achieved ? ' achieved' : ''); el.id = 'gitem-' + g.id;
+    const icon = document.createElement('div'); icon.className = 'goal-icon'; icon.textContent = g.achieved ? '✓' : '◎';
+    icon.onclick = () => goalToggle(g.id);
+    const main = document.createElement('div'); main.className = 'goal-main';
+    const txt = document.createElement('div'); txt.className = 'goal-text'; txt.textContent = g.text;
+    const sliderRow = document.createElement('div'); sliderRow.className = 'goal-slider-row';
+    const slider = document.createElement('input'); slider.type = 'range'; slider.min = 0; slider.max = 100; slider.step = 5;
+    slider.value = g.pct; slider.className = 'goal-slider'; slider.id = 'gslider-' + g.id;
+    goalUpdateSliderBg(slider, g.pct);
+    const pctLbl = document.createElement('span'); pctLbl.className = 'goal-pct'; pctLbl.textContent = g.pct + '%';
+    slider.addEventListener('input', () => { pctLbl.textContent = slider.value + '%'; goalUpdateSliderBg(slider, parseInt(slider.value)); });
+    slider.addEventListener('change', () => goalSetPct(g.id, parseInt(slider.value)));
+    sliderRow.appendChild(slider); sliderRow.appendChild(pctLbl);
+    main.appendChild(txt); main.appendChild(sliderRow);
+    const del = document.createElement('button'); del.className = 'goal-del-btn'; del.textContent = '×';
+    del.onclick = () => goalDelete(g.id);
+    el.appendChild(icon); el.appendChild(main); el.appendChild(del);
+    list.appendChild(el);
+  });
+}
+
+function goalUpdateSliderBg(slider, val) {
+  slider.style.background = `linear-gradient(90deg, #1C1C1C ${val}%, #EDE8E0 ${val}%)`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// KEYBOARD
+// ═══════════════════════════════════════════════════════════
 document.addEventListener('keydown', e => {
   if ((e.metaKey || e.ctrlKey) && e.key === 's') {
     e.preventDefault();
-    if (projId) saveProjPage(); else if (selId) saveInterest();
+    if (intProjId) saveProjPage();
+    else if (intSelId) intSave();
   }
 });
 
-// ─── START ────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// START
+// ═══════════════════════════════════════════════════════════
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/interests-tracker/sw.js');
+pomUpdateDisplay();
 boot();
+taskRender();
+goalRender();
 </script>
 </body>
 </html>

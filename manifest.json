@@ -1,7 +1,7 @@
 {
-  "name": "Interests Tracker",
-  "short_name": "Interests",
-  "description": "Track your hobbies and interests",
+  "name": "tendr",
+  "short_name": "tendr",
+  "description": "what matters",
   "start_url": "/interests-tracker/",
   "display": "standalone",
   "background_color": "#ffffff",
