@@ -149,7 +149,7 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: 
 .proj-page-back { background: none; border: none; color: var(--muted); font-size: 13px; cursor: pointer; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
 .proj-page-back:hover { color: var(--ink); }
 #projSync { font-size: 11px; color: var(--faint); }
-.proj-page-save { margin-left: auto; background: var(--accent); color: #fff; border: none; border-radius: 7px; padding: 6px 16px; font-size: 13px; cursor: pointer; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.proj-page-save { background: var(--accent); color: #fff; border: none; border-radius: 7px; padding: 6px 16px; font-size: 13px; cursor: pointer; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
 .proj-page-save:hover { background: var(--accent-hover); }
 .proj-page-body { flex: 1; overflow-y: auto; padding: 28px 44px; max-width: 740px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 4px; }
 .proj-title-inp { font-size: 28px; font-weight: 700; border: none; outline: none; background: none; width: 100%; margin-bottom: 10px; color: var(--ink); font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
@@ -185,6 +185,9 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: 
 .add-block-row { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 0; }
 .add-block-btn { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--muted); font-size: 12px; cursor: pointer; padding: 5px 10px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
 .add-block-btn:hover { border-color: var(--muted); color: var(--ink); background: var(--bg); }
+.mini-tag { font-size: 10px; padding: 2px 8px; border-radius: 10px; background: var(--bg); color: var(--muted); border: 1px solid var(--border); flex-shrink: 0; white-space: nowrap; }
+.archive-toggle-btn { margin-left: auto; background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 7px; padding: 6px 14px; font-size: 12px; cursor: pointer; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.archive-toggle-btn:hover { border-color: var(--muted); color: var(--ink); }
 
 /* ══════════════════════════════════════
    WELLNESS VIEW
@@ -342,58 +345,32 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: 
 <!-- MAIN BODY -->
 <div class="app-body">
 
-  <!-- ═══ INTERESTS VIEW ═══ -->
+  <!-- ═══ PARA VIEW ═══ -->
   <div class="view" id="view-interests">
     <div class="int-layout">
       <div class="int-left" id="intLeft">
-        <div class="int-left-header">
-          <span>Interests</span>
-          <button class="add-int-btn" onclick="addInterest()">+ Add</button>
+        <div class="int-left-header" style="flex-direction:column; align-items:stretch; gap:8px;">
+          <div class="int-tabs" id="paraTabs">
+            <button class="int-tab on" data-sec="projects" onclick="paraSwitchSection('projects')">Projects</button>
+            <button class="int-tab" data-sec="areas" onclick="paraSwitchSection('areas')">Areas</button>
+            <button class="int-tab" data-sec="resources" onclick="paraSwitchSection('resources')">Resources</button>
+            <button class="int-tab" data-sec="archive" onclick="paraSwitchSection('archive')">Archive</button>
+          </div>
+          <button class="add-int-btn" id="paraAddBtn" onclick="paraAddClick()">+ Project</button>
         </div>
         <div class="int-list" id="intList"></div>
       </div>
       <div class="int-right" id="intRight">
         <div class="int-empty" id="intEmpty">
           <div class="eicon">✦</div>
-          <p>Select an interest or add a new one</p>
+          <p id="intEmptyMsg">Select a project or add a new one</p>
         </div>
-        <div class="int-detail" id="intDetail" style="display:none;">
-          <div class="int-detail-top">
-            <button class="back-btn" onclick="intGoBack()">← Interests</button>
-            <div class="int-title-row">
-              <input class="int-title" id="intTitleInput" type="text" placeholder="Interest name" oninput="intMarkDirty()">
-              <select class="status-sel" id="intStatusSel" onchange="intMarkDirty(); renderIntList()">
-                <option value="next">🟡 Up Next</option>
-                <option value="active">🟢 Active</option>
-                <option value="someday">⚪ Someday</option>
-                <option value="archived">🔘 Archived</option>
-              </select>
-            </div>
-            <div class="int-tabs">
-              <button class="int-tab on" data-tab="notes" onclick="intSwitchTab('notes')">Notes</button>
-              <button class="int-tab" data-tab="projects" onclick="intSwitchTab('projects')">Projects</button>
-            </div>
-          </div>
-          <div class="int-pane on" id="intPane-notes">
-            <div><textarea class="note-input" id="intNoteInput" placeholder="Jot anything down… paste a link and it'll also go to Resources."></textarea></div>
-            <div><div class="slabel">Saved Notes</div><div class="cards-grid" id="intCardsGrid"></div></div>
-            <div><div class="slabel">Resources & Links</div><div class="links-list" id="intLinksList"></div><button class="add-link-btn" onclick="intAddLink()">+ Add link</button></div>
-          </div>
-          <div class="int-pane" id="intPane-projects">
-            <div class="proj-list" id="intProjList"></div>
-            <button class="add-proj-btn" onclick="intAddProject()">+ New project</button>
-          </div>
-          <div class="int-save-bar">
-            <span class="saved-flash" id="intSavedFlash">Saved ✓</span>
-            <button class="save-btn" onclick="intSave()">Save</button>
-          </div>
-        </div>
-        <!-- project page -->
         <div class="proj-page" id="projPage">
           <div class="proj-page-hdr">
-            <button class="proj-page-back" onclick="closeProjPage()">← Back</button>
+            <button class="proj-page-back" onclick="closeEntityPage()">← Back</button>
             <span id="projSync"></span>
-            <button class="proj-page-save" onclick="saveProjPage()">Save</button>
+            <button class="archive-toggle-btn" id="archiveToggleBtn" onclick="toggleArchive()">Archive</button>
+            <button class="proj-page-save" onclick="saveEntityPage()">Save</button>
           </div>
           <div class="proj-page-body" id="projPageBody"></div>
         </div>
@@ -480,7 +457,7 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: 
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
   <button class="nav-btn" data-view="interests" onclick="switchView('interests')">
-    <span class="nicon">🗂</span><span class="nlabel">Interests</span>
+    <span class="nicon">🗺</span><span class="nlabel">Plan</span>
   </button>
   <button class="nav-btn" data-view="wellness" onclick="switchView('wellness')">
     <span class="nicon">🌿</span><span class="nlabel">Wellness</span>
@@ -522,27 +499,27 @@ function switchView(view) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// SUPABASE — INTERESTS
+// PARA DATA MODEL
 // ═══════════════════════════════════════════════════════════
-let interests = [];
-let intSelId = null;
-let intProjId = null;
-let intDirty = false;
+let paraData = { projects: [], areas: [], resources: [] };
+let curSection = 'projects';
+let curEntityType = null;
+let curEntityId = null;
 
-async function intDbLoad() {
+async function paraDbLoad() {
   const res = await fetch(`${SB_URL}/rest/v1/interests?id=eq.main&user_id=eq.${USER_ID}`, { headers: SB_HDR });
   const rows = await res.json();
   return rows[0]?.data || null;
 }
 
-async function intDbSave() {
+async function paraDbSave() {
   sync('Saving…');
   const res = await fetch(`${SB_URL}/rest/v1/interests`, {
     method: 'POST', headers: SB_HDR,
-    body: JSON.stringify({ id: 'main', user_id: USER_ID, data: interests, updated_at: new Date().toISOString() })
+    body: JSON.stringify({ id: 'main', user_id: USER_ID, data: paraData, updated_at: new Date().toISOString() })
   });
   sync(res.ok ? '' : '⚠️ Save failed');
-  if (!res.ok) console.error('interests save failed', res.status);
+  if (!res.ok) console.error('para save failed', res.status);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -572,24 +549,23 @@ async function wellDbSave() {
 async function boot() {
   sync('Loading…');
 
-  // load interests
-  const savedInt = await intDbLoad();
-  if (savedInt && savedInt.length > 0) {
-    interests = savedInt.map(item => ({
-      id: item.id, name: item.name || 'Untitled', status: item.status || 'next',
-      noteCards: item.noteCards || (item.notes ? [{ id: uid(), text: item.notes }] : []),
-      links: (item.links || []).map(l => typeof l === 'string' ? { id: uid(), url: l, title: '' } : l),
-      projects: (item.projects || []).map(p => ({ id: p.id, name: p.name || 'Untitled', blocks: p.blocks || [] }))
-    }));
+  const saved = await paraDbLoad();
+  if (saved) {
+    paraData = {
+      projects: saved.projects || [],
+      areas: saved.areas || [],
+      resources: saved.resources || []
+    };
   } else {
-    interests = ['Cooking','Baking','Embroidery','Pottery','Hiking'].map(name => ({
-      id: uid(), name, status: 'next', noteCards: [], links: [], projects: []
-    }));
-    await intDbSave();
+    paraData = {
+      projects: [],
+      areas: ['Cooking','Baking','Embroidery','Pottery','Hiking'].map(name => ({ id: uid(), name, archived: false, blocks: [] })),
+      resources: []
+    };
+    await paraDbSave();
   }
-  renderIntList();
+  renderParaList();
 
-  // load wellness
   const savedWell = await wellDbLoad();
   if (savedWell) {
     wellnessData = { checklistState: savedWell.checklistState || {}, tasks: savedWell.tasks || [], goals: savedWell.goals || [] };
@@ -599,264 +575,192 @@ async function boot() {
   }
 
   sync('');
-
-  // restore last selected interest
-  const lastId = localStorage.getItem('lastIntId');
-  if (lastId && interests.find(i => i.id === lastId)) intOpen(lastId);
 }
 
 // ═══════════════════════════════════════════════════════════
-// INTERESTS — LIST
 // ═══════════════════════════════════════════════════════════
-function renderIntList() {
-  const el = document.getElementById('intList'); el.innerHTML = '';
-  const order = { active:0, next:1, someday:2, archived:3 };
-  [...interests].sort((a,b) => order[a.status]-order[b.status]).forEach(item => {
-    const div = document.createElement('div');
-    div.className = 'int-item' + (item.id === intSelId ? ' on' : '');
-    div.innerHTML = `<span class="dot ${item.status}"></span><span class="iname">${esc(item.name)}</span><button class="idel" onclick="intDelete('${item.id}',event)">×</button>`;
-    div.addEventListener('click', () => intOpen(item.id));
-    el.appendChild(div);
+// PARA — SECTION SWITCHING
+// ═══════════════════════════════════════════════════════════
+function paraSwitchSection(sec) {
+  curSection = sec;
+  document.querySelectorAll('#paraTabs .int-tab').forEach(b => b.classList.toggle('on', b.dataset.sec === sec));
+  const addBtn = document.getElementById('paraAddBtn');
+  const labels = { projects: '+ Project', areas: '+ Area', resources: '+ Link', archive: '' };
+  addBtn.textContent = labels[sec];
+  addBtn.style.display = sec === 'archive' ? 'none' : 'block';
+  const emptyMsgs = { projects: 'Select a project or add a new one', areas: 'Select an area or add a new one', resources: 'No resources yet — add one below', archive: 'Nothing archived yet' };
+  document.getElementById('intEmptyMsg').textContent = emptyMsgs[sec];
+  renderParaList();
+}
+
+function paraAddClick() {
+  if (curSection === 'projects') addProjectEntity();
+  else if (curSection === 'areas') addAreaEntity();
+  else if (curSection === 'resources') addResourceRow();
+}
+
+// ═══════════════════════════════════════════════════════════
+// PARA — LIST RENDERING
+// ═══════════════════════════════════════════════════════════
+function renderParaList() {
+  const list = document.getElementById('intList'); list.innerHTML = '';
+  if (curSection === 'projects') renderEntityRows('projects');
+  else if (curSection === 'areas') renderEntityRows('areas');
+  else if (curSection === 'resources') renderResourceRows();
+  else if (curSection === 'archive') renderArchiveRows();
+}
+
+function renderEntityRows(type) {
+  const list = document.getElementById('intList');
+  paraData[type].filter(e => !e.archived).forEach(ent => {
+    const div = document.createElement('div'); div.className = 'int-item';
+    const areaName = (type === 'projects' && ent.areaId) ? (paraData.areas.find(a => a.id === ent.areaId)?.name || '') : '';
+    div.innerHTML = `<span class="iname">${esc(ent.name)}</span>${areaName ? `<span class="mini-tag">${esc(areaName)}</span>` : ''}<button class="idel" onclick="deleteEntity('${type}','${ent.id}',event)">×</button>`;
+    div.addEventListener('click', () => openEntityPage(type, ent.id));
+    list.appendChild(div);
   });
 }
 
-function addInterest() {
-  const item = { id: uid(), name: 'New Interest', status: 'next', noteCards: [], links: [], projects: [] };
-  interests.unshift(item);
-  intDbSave();
-  intOpen(item.id);
-  setTimeout(() => { document.getElementById('intTitleInput').select(); }, 50);
-}
-
-function intDelete(id, e) {
-  e.stopPropagation();
-  if (!confirm('Delete this interest?')) return;
-  interests = interests.filter(i => i.id !== id);
-  if (intSelId === id) { intSelId = null; intShowEmpty(); }
-  intDbSave(); renderIntList();
-}
-
-function intShowEmpty() {
-  document.getElementById('intEmpty').style.display = 'flex';
-  document.getElementById('intDetail').style.display = 'none';
-  if (isMobile()) document.getElementById('intLeft').classList.remove('hidden');
-}
-
-function intGoBack() {
-  if (intDirty) intSave(true);
-  intSelId = null; intShowEmpty(); renderIntList();
-}
-
-// ═══════════════════════════════════════════════════════════
-// INTERESTS — OPEN
-// ═══════════════════════════════════════════════════════════
-function intOpen(id) {
-  if (intDirty && intSelId && intSelId !== id) intSave(true);
-  intSelId = id; intDirty = false;
-  localStorage.setItem('lastIntId', id);
-  renderIntList();
-
-  const item = interests.find(i => i.id === id); if (!item) return;
-  document.getElementById('intEmpty').style.display = 'none';
-  document.getElementById('intDetail').style.display = 'flex';
-  document.getElementById('intDetail').style.flexDirection = 'column';
-  if (isMobile()) document.getElementById('intLeft').classList.add('hidden');
-
-  document.getElementById('intTitleInput').value = item.name;
-  document.getElementById('intStatusSel').value = item.status;
-  document.getElementById('intNoteInput').value = '';
-
-  intSwitchTab('notes');
-}
-
-function intGetSel() { return interests.find(i => i.id === intSelId); }
-function intMarkDirty() { intDirty = true; }
-
-// ═══════════════════════════════════════════════════════════
-// INTERESTS — TABS
-// ═══════════════════════════════════════════════════════════
-function intSwitchTab(tab) {
-  document.querySelectorAll('.int-tab').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
-  document.querySelectorAll('.int-pane').forEach(p => p.classList.toggle('on', p.id === 'intPane-' + tab));
-  const item = intGetSel(); if (!item) return;
-  if (tab === 'notes') { intRenderCards(); intRenderLinks(); }
-  if (tab === 'projects') intRenderProjects();
-}
-
-// ═══════════════════════════════════════════════════════════
-// INTERESTS — NOTES
-// ═══════════════════════════════════════════════════════════
-function intRenderCards() {
-  const item = intGetSel(); if (!item) return;
-  const grid = document.getElementById('intCardsGrid'); grid.innerHTML = '';
-  item.noteCards.forEach((card, i) => {
-    const div = document.createElement('div'); div.className = 'note-card';
-    const del = document.createElement('button'); del.className = 'card-del'; del.textContent = '×';
-    del.onclick = () => { item.noteCards.splice(i, 1); intDbSave(); intRenderCards(); };
-    const ta = document.createElement('textarea');
-    ta.value = card.text;
-    ta.oninput = () => { card.text = ta.value; intMarkDirty(); };
-    div.appendChild(del); div.appendChild(ta);
-    grid.appendChild(div);
-  });
-}
-
-function intSaveNote() {
-  const item = intGetSel(); if (!item) return;
-  const ta = document.getElementById('intNoteInput');
-  const text = ta.value.trim(); if (!text) return;
-  // extract links
-  const urls = text.match(URL_RE()) || [];
-  urls.forEach(url => {
-    const clean = url.replace(/[),.\]]+$/, '');
-    if (!item.links.find(l => l.url === clean)) item.links.push({ id: uid(), url: clean, title: '' });
-  });
-  item.noteCards.unshift({ id: uid(), text });
-  ta.value = '';
-  intDbSave(); intRenderCards(); intRenderLinks();
-}
-
-// ═══════════════════════════════════════════════════════════
-// INTERESTS — LINKS
-// ═══════════════════════════════════════════════════════════
-function intRenderLinks() {
-  const item = intGetSel(); if (!item) return;
-  const list = document.getElementById('intLinksList'); list.innerHTML = '';
-  item.links.forEach((lk, i) => {
+function renderResourceRows() {
+  const list = document.getElementById('intList');
+  paraData.resources.forEach((r, i) => {
     const row = document.createElement('div'); row.className = 'link-row';
-    const inner = document.createElement('div'); inner.className = 'link-inner';
-    const titleEl = document.createElement('input'); titleEl.className = 'link-title-inp';
-    titleEl.value = lk.title; titleEl.placeholder = 'Title (optional)';
-    titleEl.oninput = () => { lk.title = titleEl.value; intMarkDirty(); };
-    inner.appendChild(titleEl);
-    if (lk.url && lk.url.startsWith('http')) {
-      const a = document.createElement('a'); a.className = 'link-url-a';
-      a.href = lk.url; a.target = '_blank'; a.textContent = lk.url;
-      inner.appendChild(a);
-    } else {
-      const urlEl = document.createElement('input'); urlEl.className = 'link-url-inp';
-      urlEl.value = lk.url; urlEl.placeholder = 'https://…';
-      urlEl.oninput = () => { lk.url = urlEl.value; intMarkDirty(); if (lk.url.startsWith('http') && lk.url.length > 10) intRenderLinks(); };
-      inner.appendChild(urlEl);
-    }
-    const del = document.createElement('button'); del.className = 'link-del'; del.textContent = '×';
-    del.onclick = () => { item.links.splice(i, 1); intDbSave(); intRenderLinks(); };
-    row.appendChild(inner); row.appendChild(del);
+    const isUrl = (r.url || '').startsWith('http');
+    row.innerHTML = `
+      <div class="link-inner">
+        <input class="link-title-inp" placeholder="Title" value="${esc(r.title || '')}">
+        ${isUrl ? `<a class="link-url-a" href="${esc(r.url)}" target="_blank">${esc(r.url)}</a>` : `<input class="link-url-inp" placeholder="https://…" value="${esc(r.url || '')}">`}
+      </div>
+      <button class="link-del" onclick="removeResource(${i})">×</button>
+    `;
+    const titleInp = row.querySelector('.link-title-inp');
+    titleInp.oninput = () => { r.title = titleInp.value; paraDbSave(); };
+    const urlInp = row.querySelector('.link-url-inp');
+    if (urlInp) urlInp.oninput = () => { r.url = urlInp.value; if (r.url.startsWith('http') && r.url.length > 10) { paraDbSave(); renderResourceRows(); } };
     list.appendChild(row);
   });
 }
 
-function intAddLink() {
-  const item = intGetSel(); if (!item) return;
-  item.links.push({ id: uid(), url: '', title: '' });
-  intDbSave(); intRenderLinks();
-  setTimeout(() => { const ins = document.getElementById('intLinksList').querySelectorAll('.link-url-inp'); if (ins.length) ins[ins.length-1].focus(); }, 30);
-}
-
-// ═══════════════════════════════════════════════════════════
-// INTERESTS — PROJECTS LIST
-// ═══════════════════════════════════════════════════════════
-function intRenderProjects() {
-  const item = intGetSel(); if (!item) return;
-  const list = document.getElementById('intProjList'); list.innerHTML = '';
-  item.projects.forEach(proj => {
-    const row = document.createElement('div'); row.className = 'proj-row';
-    row.innerHTML = `<span>📄</span><span class="pname">${esc(proj.name)}</span><span class="pmeta">${(proj.blocks||[]).length} blocks</span><span class="parr">→</span><button class="proj-del-btn" onclick="intDeleteProject('${proj.id}',event)">×</button>`;
-    row.addEventListener('click', () => openProjPage(proj.id));
-    list.appendChild(row);
+function renderArchiveRows() {
+  const list = document.getElementById('intList');
+  const rows = [
+    ...paraData.projects.filter(p => p.archived).map(p => ({ ...p, _type: 'projects', _label: 'Project' })),
+    ...paraData.areas.filter(a => a.archived).map(a => ({ ...a, _type: 'areas', _label: 'Area' }))
+  ];
+  rows.forEach(ent => {
+    const div = document.createElement('div'); div.className = 'int-item';
+    div.innerHTML = `<span class="iname">${esc(ent.name)}</span><span class="mini-tag">${ent._label}</span><button class="idel" onclick="deleteEntity('${ent._type}','${ent.id}',event)">×</button>`;
+    div.addEventListener('click', () => openEntityPage(ent._type, ent.id));
+    list.appendChild(div);
   });
 }
 
-function intAddProject() {
-  const item = intGetSel(); if (!item) return;
-  if (intDirty) intSave(true);
-  const proj = { id: uid(), name: 'New Project', blocks: [] };
-  item.projects.push(proj);
-  intDbSave(); intRenderProjects();
-  openProjPage(proj.id);
+// ═══════════════════════════════════════════════════════════
+// PARA — ADD / DELETE
+// ═══════════════════════════════════════════════════════════
+function addProjectEntity() {
+  const p = { id: uid(), name: 'New project', areaId: null, archived: false, blocks: [] };
+  paraData.projects.unshift(p); paraDbSave(); openEntityPage('projects', p.id);
+  setTimeout(() => document.querySelector('.proj-title-inp')?.select(), 50);
 }
 
-function intDeleteProject(pid, e) {
+function addAreaEntity() {
+  const a = { id: uid(), name: 'New area', archived: false, blocks: [] };
+  paraData.areas.unshift(a); paraDbSave(); openEntityPage('areas', a.id);
+  setTimeout(() => document.querySelector('.proj-title-inp')?.select(), 50);
+}
+
+function addResourceRow() {
+  paraData.resources.unshift({ id: uid(), title: '', url: '' });
+  paraDbSave(); renderResourceRows();
+  setTimeout(() => { const ins = document.querySelectorAll('#intList .link-title-inp'); if (ins.length) ins[0].focus(); }, 30);
+}
+
+function removeResource(i) {
+  paraData.resources.splice(i, 1);
+  paraDbSave(); renderResourceRows();
+}
+
+function deleteEntity(type, id, e) {
   e.stopPropagation();
-  const item = intGetSel(); if (!item) return;
-  if (!confirm('Delete this project?')) return;
-  item.projects = item.projects.filter(p => p.id !== pid);
-  intDbSave(); intRenderProjects();
+  if (!confirm('Delete this permanently?')) return;
+  paraData[type] = paraData[type].filter(x => x.id !== id);
+  paraDbSave(); renderParaList();
 }
 
 // ═══════════════════════════════════════════════════════════
-// INTERESTS — SAVE
+// PARA — ENTITY PAGE (project or area detail, shared block editor)
 // ═══════════════════════════════════════════════════════════
-async function intSave(silent) {
-  const item = intGetSel(); if (!item) return;
-  item.name = document.getElementById('intTitleInput').value || 'Untitled';
-  item.status = document.getElementById('intStatusSel').value;
-  // save note textarea if has content
-  const ta = document.getElementById('intNoteInput');
-  if (ta.value.trim()) intSaveNote();
-  await intDbSave();
-  intDirty = false; renderIntList();
-  if (!silent) flashSaved('intSavedFlash');
+function getEntity() {
+  if (!curEntityType) return null;
+  const arr = paraData[curEntityType];
+  return arr ? arr.find(x => x.id === curEntityId) : null;
 }
 
-// ═══════════════════════════════════════════════════════════
-// PROJECT PAGE
-// ═══════════════════════════════════════════════════════════
-function intGetProj() {
-  const item = intGetSel(); if (!item) return null;
-  return item.projects.find(p => p.id === intProjId) || null;
-}
-
-function openProjPage(pid) {
-  intProjId = pid;
-  const proj = intGetProj(); if (!proj) return;
+function openEntityPage(type, id) {
+  curEntityType = type; curEntityId = id;
   document.getElementById('projPage').classList.add('on');
-  renderProjPage();
+  renderEntityPage();
 }
 
-function closeProjPage() {
-  saveProjPage();
+function closeEntityPage() {
+  saveEntityPage();
   document.getElementById('projPage').classList.remove('on');
-  intProjId = null; intRenderProjects();
+  curEntityType = null; curEntityId = null;
+  renderParaList();
 }
 
-function renderProjPage() {
-  const proj = intGetProj(); if (!proj) return;
+function renderEntityPage() {
+  const ent = getEntity(); if (!ent) return;
+  document.getElementById('archiveToggleBtn').textContent = ent.archived ? 'Unarchive' : 'Archive';
   const body = document.getElementById('projPageBody'); body.innerHTML = '';
   const titleEl = document.createElement('input'); titleEl.className = 'proj-title-inp';
-  titleEl.value = proj.name; titleEl.placeholder = 'Project name…';
-  titleEl.oninput = () => { proj.name = titleEl.value; };
+  titleEl.value = ent.name; titleEl.placeholder = curEntityType === 'projects' ? 'Project name…' : 'Area name…';
+  titleEl.oninput = () => { ent.name = titleEl.value; };
   body.appendChild(titleEl);
-  const blocksEl = document.createElement('div'); blocksEl.id = 'projBlocksEl';
+
+  if (curEntityType === 'projects') {
+    const sel = document.createElement('select'); sel.className = 'status-sel'; sel.style.marginBottom = '14px';
+    const noneOpt = document.createElement('option'); noneOpt.value = ''; noneOpt.textContent = 'No area'; sel.appendChild(noneOpt);
+    paraData.areas.filter(a => !a.archived).forEach(a => {
+      const opt = document.createElement('option'); opt.value = a.id; opt.textContent = a.name;
+      if (ent.areaId === a.id) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.onchange = () => { ent.areaId = sel.value || null; paraDbSave(); };
+    body.appendChild(sel);
+  }
+
+  const blocksEl = document.createElement('div'); blocksEl.id = 'entityBlocksEl';
   body.appendChild(blocksEl);
-  renderProjBlocks();
+  renderEntityBlocks();
   const addRow = document.createElement('div'); addRow.className = 'add-block-row';
   ['text','heading','checklist','link'].forEach(type => {
     const labels = { text:'✏️ Text', heading:'H Heading', checklist:'☑ Checklist', link:'🔗 Link' };
     const btn = document.createElement('button'); btn.className = 'add-block-btn';
-    btn.textContent = labels[type]; btn.onclick = () => projAddBlock(type);
+    btn.textContent = labels[type]; btn.onclick = () => entityAddBlock(type);
     addRow.appendChild(btn);
   });
   body.appendChild(addRow);
 }
 
-function renderProjBlocks() {
-  const proj = intGetProj(); if (!proj) return;
-  const el = document.getElementById('projBlocksEl'); if (!el) return;
+function renderEntityBlocks() {
+  const ent = getEntity(); if (!ent) return;
+  const el = document.getElementById('entityBlocksEl'); if (!el) return;
   el.innerHTML = '';
-  proj.blocks.forEach((bl, i) => {
+  (ent.blocks || []).forEach((bl, i) => {
     const wrap = document.createElement('div'); wrap.className = 'block-wrap';
     const handle = document.createElement('span'); handle.className = 'block-handle'; handle.textContent = '⠿';
     const body = document.createElement('div'); body.className = 'block-body';
     const del = document.createElement('button'); del.className = 'block-del-btn'; del.textContent = '×';
-    del.onclick = () => { proj.blocks.splice(i, 1); renderProjBlocks(); };
-    renderProjBlock(bl, body);
+    del.onclick = () => { ent.blocks.splice(i, 1); renderEntityBlocks(); };
+    renderEntityBlock(bl, body);
     wrap.appendChild(handle); wrap.appendChild(body); wrap.appendChild(del);
     el.appendChild(wrap);
   });
 }
 
-function renderProjBlock(bl, container) {
+function renderEntityBlock(bl, container) {
   container.innerHTML = '';
   if (bl.type === 'text') {
     const ta = document.createElement('textarea'); ta.className = 'b-text';
@@ -878,12 +782,12 @@ function renderProjBlock(bl, container) {
       cb.onchange = () => { ci.done = cb.checked; txt.className = ci.done ? 'checked' : ''; };
       txt.oninput = () => { ci.text = txt.value; };
       const rm = document.createElement('button'); rm.className = 'brm'; rm.textContent = '×';
-      rm.onclick = () => { bl.items.splice(ci_i, 1); renderProjBlock(bl, container); };
+      rm.onclick = () => { bl.items.splice(ci_i, 1); renderEntityBlock(bl, container); };
       row.appendChild(cb); row.appendChild(txt); row.appendChild(rm); div.appendChild(row);
     });
     const addBtn = document.createElement('button'); addBtn.className = 'add-check-btn'; addBtn.textContent = '+ Add item';
     addBtn.onclick = () => {
-      bl.items.push({ id: uid(), text: '', done: false }); renderProjBlock(bl, container);
+      bl.items.push({ id: uid(), text: '', done: false }); renderEntityBlock(bl, container);
       setTimeout(() => { const rows = container.querySelectorAll('.b-check-row input[type=text]'); if (rows.length) rows[rows.length-1].focus(); }, 20);
     };
     div.appendChild(addBtn); container.appendChild(div);
@@ -900,34 +804,40 @@ function renderProjBlock(bl, container) {
     } else {
       const urlEl = document.createElement('input'); urlEl.className = 'b-link-url-inp';
       urlEl.value = bl.url; urlEl.placeholder = 'https://…';
-      urlEl.oninput = () => { bl.url = urlEl.value; if (bl.url.startsWith('http') && bl.url.length > 10) renderProjBlock(bl, container); };
+      urlEl.oninput = () => { bl.url = urlEl.value; if (bl.url.startsWith('http') && bl.url.length > 10) renderEntityBlock(bl, container); };
       inner.appendChild(urlEl);
     }
     const rm = document.createElement('button'); rm.className = 'brm'; rm.textContent = '×';
-    rm.onclick = () => { const p = intGetProj(); if (p) { p.blocks = p.blocks.filter(b => b.id !== bl.id); renderProjBlocks(); } };
+    rm.onclick = () => { const e2 = getEntity(); if (e2) { e2.blocks = e2.blocks.filter(b => b.id !== bl.id); renderEntityBlocks(); } };
     box.appendChild(inner); box.appendChild(rm); container.appendChild(box);
   }
 }
 
-function projAddBlock(type) {
-  const proj = intGetProj(); if (!proj) return;
+function entityAddBlock(type) {
+  const ent = getEntity(); if (!ent) return;
   const bl = { id: uid(), type };
   if (type === 'text' || type === 'heading') bl.text = '';
   if (type === 'checklist') bl.items = [];
   if (type === 'link') { bl.url = ''; bl.title = ''; }
-  proj.blocks.push(bl); renderProjBlocks();
-  setTimeout(() => { const ins = document.getElementById('projBlocksEl')?.querySelectorAll('input[type=text],textarea'); if (ins?.length) ins[ins.length-1].focus(); }, 30);
+  ent.blocks = ent.blocks || []; ent.blocks.push(bl); renderEntityBlocks();
+  setTimeout(() => { const ins = document.getElementById('entityBlocksEl')?.querySelectorAll('input[type=text],textarea'); if (ins?.length) ins[ins.length-1].focus(); }, 30);
+}
+
+function toggleArchive() {
+  const ent = getEntity(); if (!ent) return;
+  ent.archived = !ent.archived;
+  closeEntityPage();
+}
+
+async function saveEntityPage() {
+  const ent = getEntity(); if (!ent) return;
+  const titleEl = document.querySelector('.proj-title-inp'); if (titleEl) ent.name = titleEl.value || 'Untitled';
+  const sync = document.getElementById('projSync'); sync.textContent = 'Saving…';
+  await paraDbSave();
+  sync.textContent = 'Saved ✓'; setTimeout(() => sync.textContent = '', 2000);
 }
 
 function autoResize(ta) { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }
-
-async function saveProjPage() {
-  const proj = intGetProj(); if (!proj) return;
-  const titleEl = document.querySelector('.proj-title-inp'); if (titleEl) proj.name = titleEl.value;
-  const sync = document.getElementById('projSync'); sync.textContent = 'Saving…';
-  await intDbSave();
-  sync.textContent = 'Saved ✓'; setTimeout(() => sync.textContent = '', 2000);
-}
 
 // ═══════════════════════════════════════════════════════════
 // WELLNESS — CHECKLIST DATA
@@ -1164,8 +1074,7 @@ function goalUpdateSliderBg(slider, val) {
 document.addEventListener('keydown', e => {
   if ((e.metaKey || e.ctrlKey) && e.key === 's') {
     e.preventDefault();
-    if (intProjId) saveProjPage();
-    else if (intSelId) intSave();
+    if (curEntityId) saveEntityPage();
   }
 });
 
