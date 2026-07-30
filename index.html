@@ -193,6 +193,17 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: 
    OUTLINE VIEW
 ══════════════════════════════════════ */
 .outline-wrap { flex: 1; overflow-y: auto; padding: 16px 20px 20px; max-width: 720px; width: 100%; margin: 0 auto; }
+.ogroup { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 14px; overflow: hidden; }
+.ogroup-row { display: flex; align-items: center; gap: 8px; padding: 14px 16px; cursor: pointer; background: var(--bg); }
+.ogroup-row:hover { background: var(--border-light); }
+.ogroup-title { flex: 1; border: none; background: none; outline: none; font-size: 17px; font-weight: 700; color: var(--ink); font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.ogroup-del { background: none; border: none; color: var(--faint); font-size: 17px; cursor: pointer; opacity: 0; flex-shrink: 0; padding: 0; }
+.ogroup-row:hover .ogroup-del { opacity: 1; }
+.ogroup-del:hover { color: #c0392b; }
+.ogroup-body { display: none; padding: 12px 14px 14px; }
+.ogroup-body.open { display: block; }
+.ogroup-label { padding: 10px 16px 0; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--faint); }
+.ogroup.ungrouped { padding-bottom: 6px; }
 .oheading { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
 .oheading-row { display: flex; align-items: center; gap: 8px; padding: 12px 14px; cursor: pointer; }
 .oheading-row:hover { background: var(--bg); }
@@ -360,7 +371,8 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: 
   .oheading-title { font-size: 17px; }
   .osub-title { font-size: 15px; }
   .orow input[type=text] { font-size: 15px; }
-  .idel, .oheading-del, .osub-del, .orow-del { opacity: 1 !important; }
+  .idel, .oheading-del, .osub-del, .orow-del, .ogroup-del { opacity: 1 !important; }
+  .ogroup-title { font-size: 18px; }
   .nav-btn .nlabel { font-size: 11px; }
   .nav-btn .nicon { font-size: 22px; }
 }
@@ -504,7 +516,7 @@ function switchView(view) {
 // ═══════════════════════════════════════════════════════════
 // PARA DATA MODEL
 // ═══════════════════════════════════════════════════════════
-let paraData = { projects: [], areas: [] };
+let paraData = { projects: [], areas: [], groups: [] };
 
 async function paraDbLoad() {
   const res = await fetch(`${SB_URL}/rest/v1/interests?id=eq.main&user_id=eq.${USER_ID}`, { headers: SB_HDR });
@@ -553,12 +565,14 @@ async function boot() {
   if (saved) {
     paraData = {
       projects: saved.projects || [],
-      areas: saved.areas || []
+      areas: saved.areas || [],
+      groups: saved.groups || []
     };
   } else {
     paraData = {
       projects: [],
-      areas: ['Cooking','Baking','Embroidery','Pottery','Hiking'].map(name => ({ id: uid(), name, archived: false, blocks: [] }))
+      areas: ['Cooking','Baking','Embroidery','Pottery','Hiking'].map(name => ({ id: uid(), name, archived: false, blocks: [], groupId: null })),
+      groups: []
     };
     await paraDbSave();
   }
@@ -809,58 +823,113 @@ function goalUpdateSliderBg(slider, val) {
 
 
 // ═══════════════════════════════════════════════════════════
-// OUTLINE — headings (areas) > sub-headings > rows, all inline
+// OUTLINE — groups > headings (areas) > sub-headings > rows, all inline
 // ═══════════════════════════════════════════════════════════
+const outlineOpenG = {};
 const outlineOpenH = {};
 const outlineOpenS = {};
 
 function renderOutline() {
   const wrap = document.getElementById('outlineHeadings'); wrap.innerHTML = '';
-  paraData.areas.filter(a => !a.archived).forEach(area => {
-    area.sections = area.sections || [];
-    const isOpen = !!outlineOpenH[area.id];
-    const oh = document.createElement('div'); oh.className = 'oheading';
+  paraData.groups = paraData.groups || [];
 
-    const row = document.createElement('div'); row.className = 'oheading-row';
-    row.onclick = () => { outlineOpenH[area.id] = !outlineOpenH[area.id]; renderOutline(); };
-    const chev = document.createElement('span'); chev.className = 'ochev' + (isOpen ? ' open' : ''); chev.textContent = '▶';
-    const title = document.createElement('input'); title.className = 'oheading-title'; title.value = area.name;
-    title.placeholder = 'Heading name';
-    title.onclick = e => e.stopPropagation();
-    title.oninput = () => { area.name = title.value; };
-    title.onchange = () => paraDbSave();
-    const del = document.createElement('button'); del.className = 'oheading-del'; del.textContent = '×';
-    del.onclick = e => {
-      e.stopPropagation();
-      if (!confirm('Delete this heading and everything under it?')) return;
-      paraData.areas = paraData.areas.filter(a => a.id !== area.id);
-      paraDbSave(); renderOutline();
-    };
-    row.appendChild(chev); row.appendChild(title); row.appendChild(del);
-    oh.appendChild(row);
-
-    const body = document.createElement('div'); body.className = 'oheading-body' + (isOpen ? ' open' : '');
-    area.sections.forEach(sec => body.appendChild(renderSubheading(area, sec)));
-    const addSubBtn = document.createElement('button'); addSubBtn.className = 'add-sub-btn'; addSubBtn.textContent = '+ Sub-heading';
-    addSubBtn.onclick = () => {
-      area.sections.push({ id: uid(), name: 'New sub-heading', rows: [] });
-      outlineOpenH[area.id] = true;
-      paraDbSave(); renderOutline();
-    };
-    body.appendChild(addSubBtn);
-    oh.appendChild(body);
-    wrap.appendChild(oh);
+  paraData.groups.filter(g => !g.archived).forEach(group => {
+    wrap.appendChild(renderGroupEl(group));
   });
 
-  const addHeadingBtn = document.createElement('button');
-  addHeadingBtn.className = 'add-sub-btn'; addHeadingBtn.style.width = '100%'; addHeadingBtn.textContent = '+ Heading';
+  const ungrouped = paraData.areas.filter(a => !a.archived && !a.groupId);
+  if (ungrouped.length) {
+    const box = document.createElement('div'); box.className = 'ogroup ungrouped';
+    const lbl = document.createElement('div'); lbl.className = 'ogroup-label'; lbl.textContent = 'Ungrouped';
+    box.appendChild(lbl);
+    ungrouped.forEach(area => box.appendChild(renderHeadingEl(area)));
+    wrap.appendChild(box);
+  }
+
+  const addGroupBtn = document.createElement('button');
+  addGroupBtn.className = 'add-sub-btn'; addGroupBtn.style.width = '100%'; addGroupBtn.textContent = '+ Group';
+  addGroupBtn.onclick = () => {
+    const g = { id: uid(), name: 'New group', archived: false };
+    paraData.groups.push(g);
+    outlineOpenG[g.id] = true;
+    paraDbSave(); renderOutline();
+  };
+  wrap.appendChild(addGroupBtn);
+}
+
+function renderGroupEl(group) {
+  const isOpen = !!outlineOpenG[group.id];
+  const og = document.createElement('div'); og.className = 'ogroup';
+
+  const row = document.createElement('div'); row.className = 'ogroup-row';
+  row.onclick = () => { outlineOpenG[group.id] = !outlineOpenG[group.id]; renderOutline(); };
+  const chev = document.createElement('span'); chev.className = 'ochev' + (isOpen ? ' open' : ''); chev.textContent = '▶';
+  const title = document.createElement('input'); title.className = 'ogroup-title'; title.value = group.name;
+  title.placeholder = 'Group name';
+  title.onclick = e => e.stopPropagation();
+  title.oninput = () => { group.name = title.value; };
+  title.onchange = () => paraDbSave();
+  const del = document.createElement('button'); del.className = 'ogroup-del'; del.textContent = '×';
+  del.onclick = e => {
+    e.stopPropagation();
+    if (!confirm('Delete this group? Its headings become ungrouped, not deleted.')) return;
+    paraData.areas.forEach(a => { if (a.groupId === group.id) a.groupId = null; });
+    paraData.groups = paraData.groups.filter(g => g.id !== group.id);
+    paraDbSave(); renderOutline();
+  };
+  row.appendChild(chev); row.appendChild(title); row.appendChild(del);
+  og.appendChild(row);
+
+  const body = document.createElement('div'); body.className = 'ogroup-body' + (isOpen ? ' open' : '');
+  paraData.areas.filter(a => !a.archived && a.groupId === group.id).forEach(area => {
+    body.appendChild(renderHeadingEl(area));
+  });
+  const addHeadingBtn = document.createElement('button'); addHeadingBtn.className = 'add-sub-btn'; addHeadingBtn.textContent = '+ Heading';
   addHeadingBtn.onclick = () => {
-    const a = { id: uid(), name: 'New heading', archived: false, blocks: [], sections: [] };
+    const a = { id: uid(), name: 'New heading', archived: false, blocks: [], sections: [], groupId: group.id };
     paraData.areas.push(a);
     outlineOpenH[a.id] = true;
     paraDbSave(); renderOutline();
   };
-  wrap.appendChild(addHeadingBtn);
+  body.appendChild(addHeadingBtn);
+  og.appendChild(body);
+  return og;
+}
+
+function renderHeadingEl(area) {
+  area.sections = area.sections || [];
+  const isOpen = !!outlineOpenH[area.id];
+  const oh = document.createElement('div'); oh.className = 'oheading';
+
+  const row = document.createElement('div'); row.className = 'oheading-row';
+  row.onclick = () => { outlineOpenH[area.id] = !outlineOpenH[area.id]; renderOutline(); };
+  const chev = document.createElement('span'); chev.className = 'ochev' + (isOpen ? ' open' : ''); chev.textContent = '▶';
+  const title = document.createElement('input'); title.className = 'oheading-title'; title.value = area.name;
+  title.placeholder = 'Heading name';
+  title.onclick = e => e.stopPropagation();
+  title.oninput = () => { area.name = title.value; };
+  title.onchange = () => paraDbSave();
+  const del = document.createElement('button'); del.className = 'oheading-del'; del.textContent = '×';
+  del.onclick = e => {
+    e.stopPropagation();
+    if (!confirm('Delete this heading and everything under it?')) return;
+    paraData.areas = paraData.areas.filter(a => a.id !== area.id);
+    paraDbSave(); renderOutline();
+  };
+  row.appendChild(chev); row.appendChild(title); row.appendChild(del);
+  oh.appendChild(row);
+
+  const body = document.createElement('div'); body.className = 'oheading-body' + (isOpen ? ' open' : '');
+  area.sections.forEach(sec => body.appendChild(renderSubheading(area, sec)));
+  const addSubBtn = document.createElement('button'); addSubBtn.className = 'add-sub-btn'; addSubBtn.textContent = '+ Sub-heading';
+  addSubBtn.onclick = () => {
+    area.sections.push({ id: uid(), name: 'New sub-heading', rows: [] });
+    outlineOpenH[area.id] = true;
+    paraDbSave(); renderOutline();
+  };
+  body.appendChild(addSubBtn);
+  oh.appendChild(body);
+  return oh;
 }
 
 function renderSubheading(area, sec) {
