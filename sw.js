@@ -1,4 +1,4 @@
-const CACHE = 'interests-v1';
+const CACHE = 'interests-v2';
 const ASSETS = ['/interests-tracker/', '/interests-tracker/index.html'];
 
 self.addEventListener('install', e => {
@@ -12,6 +12,11 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  const url = new URL(e.request.url);
+  // Only handle same-origin GET requests (the app shell). Let everything
+  // else - cross-origin API calls like Supabase, POST/PATCH requests, etc.
+  // - pass through untouched instead of risking a broken respondWith().
+  if (url.origin !== self.location.origin || e.request.method !== 'GET') return;
   // network first, fall back to cache
   e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
 });
