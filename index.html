@@ -815,7 +815,7 @@ const outlineOpenH = {};
 const outlineOpenS = {};
 
 function renderOutline() {
-  const wrap = document.getElementById('outlineWrap'); wrap.innerHTML = '';
+  const wrap = document.getElementById('outlineHeadings'); wrap.innerHTML = '';
   paraData.areas.filter(a => !a.archived).forEach(area => {
     area.sections = area.sections || [];
     const isOpen = !!outlineOpenH[area.id];
