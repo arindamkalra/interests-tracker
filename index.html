@@ -190,6 +190,37 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: 
 .archive-toggle-btn:hover { border-color: var(--muted); color: var(--ink); }
 
 /* ══════════════════════════════════════
+   OUTLINE VIEW
+══════════════════════════════════════ */
+.outline-wrap { flex: 1; overflow-y: auto; padding: 16px 20px 20px; max-width: 720px; width: 100%; margin: 0 auto; }
+.oheading { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
+.oheading-row { display: flex; align-items: center; gap: 8px; padding: 12px 14px; cursor: pointer; }
+.oheading-row:hover { background: var(--bg); }
+.ochev { color: var(--faint); font-size: 11px; transition: transform 0.15s; flex-shrink: 0; }
+.ochev.open { transform: rotate(90deg); }
+.oheading-title { flex: 1; border: none; background: none; outline: none; font-size: 16px; font-weight: 700; color: var(--ink); font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.oheading-del { background: none; border: none; color: var(--faint); font-size: 16px; cursor: pointer; opacity: 0; flex-shrink: 0; padding: 0; }
+.oheading-row:hover .oheading-del { opacity: 1; }
+.oheading-del:hover { color: #c0392b; }
+.oheading-body { display: none; padding: 0 14px 12px; }
+.oheading-body.open { display: block; }
+.osub { margin-top: 10px; border: 1px solid var(--border-light); border-radius: 9px; overflow: hidden; }
+.osub-row { display: flex; align-items: center; gap: 7px; padding: 8px 10px; background: var(--bg); cursor: pointer; }
+.osub-title { flex: 1; border: none; background: none; outline: none; font-size: 13px; font-weight: 600; color: var(--ink); font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.osub-del { background: none; border: none; color: var(--faint); font-size: 14px; cursor: pointer; opacity: 0; flex-shrink: 0; padding: 0; }
+.osub-row:hover .osub-del { opacity: 1; }
+.osub-body { display: none; padding: 8px 10px 10px; }
+.osub-body.open { display: block; }
+.orow { display: flex; align-items: center; gap: 8px; padding: 4px 2px; }
+.orow input[type=checkbox] { accent-color: var(--ink); width: 15px; height: 15px; flex-shrink: 0; }
+.orow input[type=text] { flex: 1; border: none; background: none; outline: none; font-size: 13px; color: var(--ink); font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.orow input[type=text].done { text-decoration: line-through; color: var(--muted); }
+.orow-del { background: none; border: none; color: var(--faint); font-size: 14px; cursor: pointer; opacity: 0; padding: 0; flex-shrink: 0; }
+.orow:hover .orow-del { opacity: 1; }
+.add-sub-btn, .add-row-btn { background: none; border: 1px dashed var(--border); border-radius: 7px; color: var(--faint); font-size: 12px; cursor: pointer; padding: 6px 12px; margin-top: 8px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.add-sub-btn:hover, .add-row-btn:hover { border-color: var(--muted); color: var(--muted); }
+
+/* ══════════════════════════════════════
    WELLNESS VIEW
 ══════════════════════════════════════ */
 .wellness-wrap { flex: 1; overflow-y: auto; padding: 16px 20px 20px; max-width: 680px; width: 100%; margin: 0 auto; }
@@ -323,6 +354,10 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: 
   .focus-input, .goal-input { font-size: 16px; } /* prevent iOS zoom */
   .link-title-inp, .link-url-inp { font-size: 15px; }
   .app-title { font-size: 17px; }
+  .oheading-title { font-size: 17px; }
+  .osub-title { font-size: 15px; }
+  .orow input[type=text] { font-size: 15px; }
+  .idel, .oheading-del, .osub-del, .orow-del { opacity: 1 !important; }
   .nav-btn .nlabel { font-size: 11px; }
   .nav-btn .nicon { font-size: 22px; }
 }
@@ -451,12 +486,20 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: 
     </div>
   </div>
 
+  <!-- ═══ OUTLINE VIEW ═══ -->
+  <div class="view" id="view-outline">
+    <div class="outline-wrap" id="outlineWrap"></div>
+  </div>
+
 </div><!-- /app-body -->
 
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
   <button class="nav-btn" data-view="interests" onclick="switchView('interests')">
     <span class="nicon">🗺</span><span class="nlabel">Plan</span>
+  </button>
+  <button class="nav-btn" data-view="outline" onclick="switchView('outline')">
+    <span class="nicon">📝</span><span class="nlabel">Outline</span>
   </button>
   <button class="nav-btn" data-view="wellness" onclick="switchView('wellness')">
     <span class="nicon">🌿</span><span class="nlabel">Wellness</span>
@@ -495,6 +538,7 @@ function switchView(view) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('on', b.dataset.view === view));
   if (view === 'wellness') wellRender();
   if (view === 'focus') { taskRender(); goalRender(); }
+  if (view === 'outline') renderOutline();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -640,7 +684,7 @@ function addProjectEntity() {
 }
 
 function addAreaEntity() {
-  const a = { id: uid(), name: 'New area', archived: false, blocks: [] };
+  const a = { id: uid(), name: 'New area', archived: false, blocks: [], sections: [] };
   paraData.areas.unshift(a); paraDbSave(); openEntityPage('areas', a.id);
   setTimeout(() => document.querySelector('.proj-title-inp')?.select(), 50);
 }
@@ -1031,6 +1075,115 @@ function goalRender() {
 
 function goalUpdateSliderBg(slider, val) {
   slider.style.background = `linear-gradient(90deg, #1C1C1C ${val}%, #EDE8E0 ${val}%)`;
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// OUTLINE — headings (areas) > sub-headings > rows, all inline
+// ═══════════════════════════════════════════════════════════
+const outlineOpenH = {};
+const outlineOpenS = {};
+
+function renderOutline() {
+  const wrap = document.getElementById('outlineWrap'); wrap.innerHTML = '';
+  paraData.areas.filter(a => !a.archived).forEach(area => {
+    area.sections = area.sections || [];
+    const isOpen = !!outlineOpenH[area.id];
+    const oh = document.createElement('div'); oh.className = 'oheading';
+
+    const row = document.createElement('div'); row.className = 'oheading-row';
+    row.onclick = () => { outlineOpenH[area.id] = !outlineOpenH[area.id]; renderOutline(); };
+    const chev = document.createElement('span'); chev.className = 'ochev' + (isOpen ? ' open' : ''); chev.textContent = '▶';
+    const title = document.createElement('input'); title.className = 'oheading-title'; title.value = area.name;
+    title.placeholder = 'Heading name';
+    title.onclick = e => e.stopPropagation();
+    title.oninput = () => { area.name = title.value; };
+    title.onchange = () => paraDbSave();
+    const del = document.createElement('button'); del.className = 'oheading-del'; del.textContent = '×';
+    del.onclick = e => {
+      e.stopPropagation();
+      if (!confirm('Delete this heading and everything under it?')) return;
+      paraData.areas = paraData.areas.filter(a => a.id !== area.id);
+      paraDbSave(); renderOutline();
+    };
+    row.appendChild(chev); row.appendChild(title); row.appendChild(del);
+    oh.appendChild(row);
+
+    const body = document.createElement('div'); body.className = 'oheading-body' + (isOpen ? ' open' : '');
+    area.sections.forEach(sec => body.appendChild(renderSubheading(area, sec)));
+    const addSubBtn = document.createElement('button'); addSubBtn.className = 'add-sub-btn'; addSubBtn.textContent = '+ Sub-heading';
+    addSubBtn.onclick = () => {
+      area.sections.push({ id: uid(), name: 'New sub-heading', rows: [] });
+      outlineOpenH[area.id] = true;
+      paraDbSave(); renderOutline();
+    };
+    body.appendChild(addSubBtn);
+    oh.appendChild(body);
+    wrap.appendChild(oh);
+  });
+
+  const addHeadingBtn = document.createElement('button');
+  addHeadingBtn.className = 'add-sub-btn'; addHeadingBtn.style.width = '100%'; addHeadingBtn.textContent = '+ Heading';
+  addHeadingBtn.onclick = () => {
+    const a = { id: uid(), name: 'New heading', archived: false, blocks: [], sections: [] };
+    paraData.areas.push(a);
+    outlineOpenH[a.id] = true;
+    paraDbSave(); renderOutline();
+  };
+  wrap.appendChild(addHeadingBtn);
+}
+
+function renderSubheading(area, sec) {
+  sec.rows = sec.rows || [];
+  const isOpen = !!outlineOpenS[sec.id];
+  const os = document.createElement('div'); os.className = 'osub'; os.dataset.secId = sec.id;
+
+  const row = document.createElement('div'); row.className = 'osub-row';
+  row.onclick = () => { outlineOpenS[sec.id] = !outlineOpenS[sec.id]; renderOutline(); };
+  const chev = document.createElement('span'); chev.className = 'ochev' + (isOpen ? ' open' : ''); chev.textContent = '▶';
+  const title = document.createElement('input'); title.className = 'osub-title'; title.value = sec.name;
+  title.placeholder = 'Sub-heading name';
+  title.onclick = e => e.stopPropagation();
+  title.oninput = () => { sec.name = title.value; };
+  title.onchange = () => paraDbSave();
+  const del = document.createElement('button'); del.className = 'osub-del'; del.textContent = '×';
+  del.onclick = e => {
+    e.stopPropagation();
+    if (!confirm('Delete this sub-heading and its rows?')) return;
+    area.sections = area.sections.filter(s => s.id !== sec.id);
+    paraDbSave(); renderOutline();
+  };
+  row.appendChild(chev); row.appendChild(title); row.appendChild(del);
+  os.appendChild(row);
+
+  const body = document.createElement('div'); body.className = 'osub-body' + (isOpen ? ' open' : '');
+  sec.rows.forEach((r, ri) => {
+    const rowEl = document.createElement('div'); rowEl.className = 'orow';
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!r.done;
+    const txt = document.createElement('input'); txt.type = 'text'; txt.value = r.text; txt.placeholder = 'Row…';
+    txt.className = r.done ? 'done' : '';
+    cb.onchange = () => { r.done = cb.checked; txt.className = r.done ? 'done' : ''; paraDbSave(); };
+    txt.oninput = () => { r.text = txt.value; };
+    txt.onchange = () => paraDbSave();
+    const rm = document.createElement('button'); rm.className = 'orow-del'; rm.textContent = '×';
+    rm.onclick = () => { sec.rows.splice(ri, 1); paraDbSave(); renderOutline(); };
+    rowEl.appendChild(cb); rowEl.appendChild(txt); rowEl.appendChild(rm);
+    body.appendChild(rowEl);
+  });
+  const addRowBtn = document.createElement('button'); addRowBtn.className = 'add-row-btn'; addRowBtn.textContent = '+ Row';
+  addRowBtn.onclick = () => {
+    sec.rows.push({ id: uid(), text: '', done: false });
+    outlineOpenS[sec.id] = true;
+    paraDbSave(); renderOutline();
+    setTimeout(() => {
+      const scope = document.querySelector('.osub[data-sec-id="' + sec.id + '"] .osub-body');
+      const ins = scope ? scope.querySelectorAll('input[type=text]') : [];
+      if (ins.length) ins[ins.length - 1].focus();
+    }, 30);
+  };
+  body.appendChild(addRowBtn);
+  os.appendChild(body);
+  return os;
 }
 
 // ═══════════════════════════════════════════════════════════
