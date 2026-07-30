@@ -217,6 +217,9 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: 
 .orow input[type=text].done { text-decoration: line-through; color: var(--muted); }
 .orow-del { background: none; border: none; color: var(--faint); font-size: 14px; cursor: pointer; opacity: 0; padding: 0; flex-shrink: 0; }
 .orow:hover .orow-del { opacity: 1; }
+.orow-totask { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 6px; font-size: 12px; cursor: pointer; padding: 2px 7px; flex-shrink: 0; line-height: 1.4; }
+.orow-totask:hover { border-color: var(--muted); color: var(--ink); }
+.orow-totask.sent { background: var(--check-bg); color: var(--check); border-color: var(--check); }
 .add-sub-btn, .add-row-btn { background: none; border: 1px dashed var(--border); border-radius: 7px; color: var(--faint); font-size: 12px; cursor: pointer; padding: 6px 12px; margin-top: 8px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
 .add-sub-btn:hover, .add-row-btn:hover { border-color: var(--muted); color: var(--muted); }
 
@@ -380,38 +383,6 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: 
 <!-- MAIN BODY -->
 <div class="app-body">
 
-  <!-- ═══ PARA VIEW ═══ -->
-  <div class="view" id="view-interests">
-    <div class="int-layout">
-      <div class="int-left" id="intLeft">
-        <div class="int-left-header" style="flex-direction:column; align-items:stretch; gap:8px;">
-          <div class="int-tabs" id="paraTabs">
-            <button class="int-tab on" data-sec="projects" onclick="paraSwitchSection('projects')">Projects</button>
-            <button class="int-tab" data-sec="areas" onclick="paraSwitchSection('areas')">Areas</button>
-            <button class="int-tab" data-sec="archive" onclick="paraSwitchSection('archive')">Archive</button>
-          </div>
-          <button class="add-int-btn" id="paraAddBtn" onclick="paraAddClick()">+ Project</button>
-        </div>
-        <div class="int-list" id="intList"></div>
-      </div>
-      <div class="int-right" id="intRight">
-        <div class="int-empty" id="intEmpty">
-          <div class="eicon">✦</div>
-          <p id="intEmptyMsg">Select a project or add a new one</p>
-        </div>
-        <div class="proj-page" id="projPage">
-          <div class="proj-page-hdr">
-            <button class="proj-page-back" onclick="closeEntityPage()">← Back</button>
-            <span id="projSync"></span>
-            <button class="archive-toggle-btn" id="archiveToggleBtn" onclick="toggleArchive()">Archive</button>
-            <button class="proj-page-save" onclick="saveEntityPage()">Save</button>
-          </div>
-          <div class="proj-page-body" id="projPageBody"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- ═══ WELLNESS VIEW ═══ -->
   <div class="view" id="view-wellness">
     <div class="wellness-wrap">
@@ -426,9 +397,9 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: 
     </div>
   </div>
 
-  <!-- ═══ FOCUS VIEW ═══ -->
-  <div class="view on" id="view-focus">
-    <div class="focus-wrap">
+  <!-- ═══ OUTLINE VIEW ═══ -->
+  <div class="view on" id="view-outline">
+    <div class="outline-wrap">
 
       <!-- Pomodoro -->
       <div class="pom-card">
@@ -483,29 +454,19 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: 
         <div id="goalList"></div>
       </div>
 
+      <div id="outlineHeadings"></div>
     </div>
-  </div>
-
-  <!-- ═══ OUTLINE VIEW ═══ -->
-  <div class="view" id="view-outline">
-    <div class="outline-wrap" id="outlineWrap"></div>
   </div>
 
 </div><!-- /app-body -->
 
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
-  <button class="nav-btn" data-view="interests" onclick="switchView('interests')">
-    <span class="nicon">🗺</span><span class="nlabel">Plan</span>
-  </button>
-  <button class="nav-btn" data-view="outline" onclick="switchView('outline')">
+  <button class="nav-btn on" data-view="outline" onclick="switchView('outline')">
     <span class="nicon">📝</span><span class="nlabel">Outline</span>
   </button>
   <button class="nav-btn" data-view="wellness" onclick="switchView('wellness')">
     <span class="nicon">🌿</span><span class="nlabel">Wellness</span>
-  </button>
-  <button class="nav-btn on" data-view="focus" onclick="switchView('focus')">
-    <span class="nicon">🍅</span><span class="nlabel">Focus</span>
   </button>
 </nav>
 
@@ -537,17 +498,13 @@ function switchView(view) {
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'view-' + view));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('on', b.dataset.view === view));
   if (view === 'wellness') wellRender();
-  if (view === 'focus') { taskRender(); goalRender(); }
-  if (view === 'outline') renderOutline();
+  if (view === 'outline') { renderOutline(); taskRender(); goalRender(); }
 }
 
 // ═══════════════════════════════════════════════════════════
 // PARA DATA MODEL
 // ═══════════════════════════════════════════════════════════
 let paraData = { projects: [], areas: [] };
-let curSection = 'projects';
-let curEntityType = null;
-let curEntityId = null;
 
 async function paraDbLoad() {
   const res = await fetch(`${SB_URL}/rest/v1/interests?id=eq.main&user_id=eq.${USER_ID}`, { headers: SB_HDR });
@@ -605,7 +562,7 @@ async function boot() {
     };
     await paraDbSave();
   }
-  renderParaList();
+  renderOutline();
 
   const savedWell = await wellDbLoad();
   if (savedWell) {
@@ -614,239 +571,12 @@ async function boot() {
     wellnessData = { checklistState: {}, tasks: [], goals: [] };
     await wellDbSave();
   }
+  taskRender();
+  goalRender();
 
   sync('');
 }
 
-// ═══════════════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════════════
-// PARA — SECTION SWITCHING
-// ═══════════════════════════════════════════════════════════
-function paraSwitchSection(sec) {
-  curSection = sec;
-  document.querySelectorAll('#paraTabs .int-tab').forEach(b => b.classList.toggle('on', b.dataset.sec === sec));
-  const addBtn = document.getElementById('paraAddBtn');
-  const labels = { projects: '+ Project', areas: '+ Area', archive: '' };
-  addBtn.textContent = labels[sec];
-  addBtn.style.display = sec === 'archive' ? 'none' : 'block';
-  const emptyMsgs = { projects: 'Select a project or add a new one', areas: 'Select an area or add a new one', archive: 'Nothing archived yet' };
-  document.getElementById('intEmptyMsg').textContent = emptyMsgs[sec];
-  renderParaList();
-}
-
-function paraAddClick() {
-  if (curSection === 'projects') addProjectEntity();
-  else if (curSection === 'areas') addAreaEntity();
-}
-
-// ═══════════════════════════════════════════════════════════
-// PARA — LIST RENDERING
-// ═══════════════════════════════════════════════════════════
-function renderParaList() {
-  const list = document.getElementById('intList'); list.innerHTML = '';
-  if (curSection === 'projects') renderEntityRows('projects');
-  else if (curSection === 'areas') renderEntityRows('areas');
-  else if (curSection === 'archive') renderArchiveRows();
-}
-
-function renderEntityRows(type) {
-  const list = document.getElementById('intList');
-  paraData[type].filter(e => !e.archived).forEach(ent => {
-    const div = document.createElement('div'); div.className = 'int-item';
-    const areaName = (type === 'projects' && ent.areaId) ? (paraData.areas.find(a => a.id === ent.areaId)?.name || '') : '';
-    div.innerHTML = `<span class="iname">${esc(ent.name)}</span>${areaName ? `<span class="mini-tag">${esc(areaName)}</span>` : ''}<button class="idel" onclick="deleteEntity('${type}','${ent.id}',event)">×</button>`;
-    div.addEventListener('click', () => openEntityPage(type, ent.id));
-    list.appendChild(div);
-  });
-}
-
-function renderArchiveRows() {
-  const list = document.getElementById('intList');
-  const rows = [
-    ...paraData.projects.filter(p => p.archived).map(p => ({ ...p, _type: 'projects', _label: 'Project' })),
-    ...paraData.areas.filter(a => a.archived).map(a => ({ ...a, _type: 'areas', _label: 'Area' }))
-  ];
-  rows.forEach(ent => {
-    const div = document.createElement('div'); div.className = 'int-item';
-    div.innerHTML = `<span class="iname">${esc(ent.name)}</span><span class="mini-tag">${ent._label}</span><button class="idel" onclick="deleteEntity('${ent._type}','${ent.id}',event)">×</button>`;
-    div.addEventListener('click', () => openEntityPage(ent._type, ent.id));
-    list.appendChild(div);
-  });
-}
-
-// ═══════════════════════════════════════════════════════════
-// PARA — ADD / DELETE
-// ═══════════════════════════════════════════════════════════
-function addProjectEntity() {
-  const p = { id: uid(), name: 'New project', areaId: null, archived: false, blocks: [] };
-  paraData.projects.unshift(p); paraDbSave(); openEntityPage('projects', p.id);
-  setTimeout(() => document.querySelector('.proj-title-inp')?.select(), 50);
-}
-
-function addAreaEntity() {
-  const a = { id: uid(), name: 'New area', archived: false, blocks: [], sections: [] };
-  paraData.areas.unshift(a); paraDbSave(); openEntityPage('areas', a.id);
-  setTimeout(() => document.querySelector('.proj-title-inp')?.select(), 50);
-}
-
-function deleteEntity(type, id, e) {
-  e.stopPropagation();
-  if (!confirm('Delete this permanently?')) return;
-  paraData[type] = paraData[type].filter(x => x.id !== id);
-  paraDbSave(); renderParaList();
-}
-
-// ═══════════════════════════════════════════════════════════
-// PARA — ENTITY PAGE (project or area detail, shared block editor)
-// ═══════════════════════════════════════════════════════════
-function getEntity() {
-  if (!curEntityType) return null;
-  const arr = paraData[curEntityType];
-  return arr ? arr.find(x => x.id === curEntityId) : null;
-}
-
-function openEntityPage(type, id) {
-  curEntityType = type; curEntityId = id;
-  document.getElementById('projPage').classList.add('on');
-  renderEntityPage();
-}
-
-function closeEntityPage() {
-  saveEntityPage();
-  document.getElementById('projPage').classList.remove('on');
-  curEntityType = null; curEntityId = null;
-  renderParaList();
-}
-
-function renderEntityPage() {
-  const ent = getEntity(); if (!ent) return;
-  document.getElementById('archiveToggleBtn').textContent = ent.archived ? 'Unarchive' : 'Archive';
-  const body = document.getElementById('projPageBody'); body.innerHTML = '';
-  const titleEl = document.createElement('input'); titleEl.className = 'proj-title-inp';
-  titleEl.value = ent.name; titleEl.placeholder = curEntityType === 'projects' ? 'Project name…' : 'Area name…';
-  titleEl.oninput = () => { ent.name = titleEl.value; };
-  body.appendChild(titleEl);
-
-  if (curEntityType === 'projects') {
-    const sel = document.createElement('select'); sel.className = 'status-sel'; sel.style.marginBottom = '14px';
-    const noneOpt = document.createElement('option'); noneOpt.value = ''; noneOpt.textContent = 'No area'; sel.appendChild(noneOpt);
-    paraData.areas.filter(a => !a.archived).forEach(a => {
-      const opt = document.createElement('option'); opt.value = a.id; opt.textContent = a.name;
-      if (ent.areaId === a.id) opt.selected = true;
-      sel.appendChild(opt);
-    });
-    sel.onchange = () => { ent.areaId = sel.value || null; paraDbSave(); };
-    body.appendChild(sel);
-  }
-
-  const blocksEl = document.createElement('div'); blocksEl.id = 'entityBlocksEl';
-  body.appendChild(blocksEl);
-  renderEntityBlocks();
-  const addRow = document.createElement('div'); addRow.className = 'add-block-row';
-  const blockTypes = curEntityType === 'areas' ? ['text','heading','checklist','link'] : ['text','heading','checklist'];
-  blockTypes.forEach(type => {
-    const labels = { text:'✏️ Text', heading:'H Heading', checklist:'☑ Checklist', link:'🔗 Link' };
-    const btn = document.createElement('button'); btn.className = 'add-block-btn';
-    btn.textContent = labels[type]; btn.onclick = () => entityAddBlock(type);
-    addRow.appendChild(btn);
-  });
-  body.appendChild(addRow);
-}
-
-function renderEntityBlocks() {
-  const ent = getEntity(); if (!ent) return;
-  const el = document.getElementById('entityBlocksEl'); if (!el) return;
-  el.innerHTML = '';
-  (ent.blocks || []).forEach((bl, i) => {
-    const wrap = document.createElement('div'); wrap.className = 'block-wrap';
-    const handle = document.createElement('span'); handle.className = 'block-handle'; handle.textContent = '⠿';
-    const body = document.createElement('div'); body.className = 'block-body';
-    const del = document.createElement('button'); del.className = 'block-del-btn'; del.textContent = '×';
-    del.onclick = () => { ent.blocks.splice(i, 1); renderEntityBlocks(); };
-    renderEntityBlock(bl, body);
-    wrap.appendChild(handle); wrap.appendChild(body); wrap.appendChild(del);
-    el.appendChild(wrap);
-  });
-}
-
-function renderEntityBlock(bl, container) {
-  container.innerHTML = '';
-  if (bl.type === 'text') {
-    const ta = document.createElement('textarea'); ta.className = 'b-text';
-    ta.value = bl.text; ta.placeholder = 'Write something…'; ta.rows = 1;
-    ta.oninput = () => { bl.text = ta.value; autoResize(ta); };
-    container.appendChild(ta); setTimeout(() => autoResize(ta), 0);
-  } else if (bl.type === 'heading') {
-    const inp = document.createElement('input'); inp.className = 'b-heading';
-    inp.value = bl.text; inp.placeholder = 'Heading';
-    inp.oninput = () => { bl.text = inp.value; };
-    container.appendChild(inp);
-  } else if (bl.type === 'checklist') {
-    const div = document.createElement('div'); div.className = 'b-checklist';
-    (bl.items||[]).forEach((ci, ci_i) => {
-      const row = document.createElement('div'); row.className = 'b-check-row';
-      const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = ci.done;
-      const txt = document.createElement('input'); txt.type = 'text'; txt.value = ci.text;
-      txt.className = ci.done ? 'checked' : '';
-      cb.onchange = () => { ci.done = cb.checked; txt.className = ci.done ? 'checked' : ''; };
-      txt.oninput = () => { ci.text = txt.value; };
-      const rm = document.createElement('button'); rm.className = 'brm'; rm.textContent = '×';
-      rm.onclick = () => { bl.items.splice(ci_i, 1); renderEntityBlock(bl, container); };
-      row.appendChild(cb); row.appendChild(txt); row.appendChild(rm); div.appendChild(row);
-    });
-    const addBtn = document.createElement('button'); addBtn.className = 'add-check-btn'; addBtn.textContent = '+ Add item';
-    addBtn.onclick = () => {
-      bl.items.push({ id: uid(), text: '', done: false }); renderEntityBlock(bl, container);
-      setTimeout(() => { const rows = container.querySelectorAll('.b-check-row input[type=text]'); if (rows.length) rows[rows.length-1].focus(); }, 20);
-    };
-    div.appendChild(addBtn); container.appendChild(div);
-  } else if (bl.type === 'link') {
-    const box = document.createElement('div'); box.className = 'b-link-box';
-    const inner = document.createElement('div'); inner.className = 'b-link-inner';
-    const titleEl = document.createElement('input'); titleEl.className = 'b-link-title-inp';
-    titleEl.value = bl.title; titleEl.placeholder = 'Title (optional)';
-    titleEl.oninput = () => { bl.title = titleEl.value; };
-    inner.appendChild(titleEl);
-    if (bl.url && bl.url.startsWith('http')) {
-      const a = document.createElement('a'); a.className = 'b-link-a'; a.href = bl.url; a.target = '_blank'; a.textContent = bl.url;
-      inner.appendChild(a);
-    } else {
-      const urlEl = document.createElement('input'); urlEl.className = 'b-link-url-inp';
-      urlEl.value = bl.url; urlEl.placeholder = 'https://…';
-      urlEl.oninput = () => { bl.url = urlEl.value; if (bl.url.startsWith('http') && bl.url.length > 10) renderEntityBlock(bl, container); };
-      inner.appendChild(urlEl);
-    }
-    const rm = document.createElement('button'); rm.className = 'brm'; rm.textContent = '×';
-    rm.onclick = () => { const e2 = getEntity(); if (e2) { e2.blocks = e2.blocks.filter(b => b.id !== bl.id); renderEntityBlocks(); } };
-    box.appendChild(inner); box.appendChild(rm); container.appendChild(box);
-  }
-}
-
-function entityAddBlock(type) {
-  const ent = getEntity(); if (!ent) return;
-  const bl = { id: uid(), type };
-  if (type === 'text' || type === 'heading') bl.text = '';
-  if (type === 'checklist') bl.items = [];
-  if (type === 'link') { bl.url = ''; bl.title = ''; }
-  ent.blocks = ent.blocks || []; ent.blocks.push(bl); renderEntityBlocks();
-  setTimeout(() => { const ins = document.getElementById('entityBlocksEl')?.querySelectorAll('input[type=text],textarea'); if (ins?.length) ins[ins.length-1].focus(); }, 30);
-}
-
-function toggleArchive() {
-  const ent = getEntity(); if (!ent) return;
-  ent.archived = !ent.archived;
-  closeEntityPage();
-}
-
-async function saveEntityPage() {
-  const ent = getEntity(); if (!ent) return;
-  const titleEl = document.querySelector('.proj-title-inp'); if (titleEl) ent.name = titleEl.value || 'Untitled';
-  const sync = document.getElementById('projSync'); sync.textContent = 'Saving…';
-  await paraDbSave();
-  sync.textContent = 'Saved ✓'; setTimeout(() => sync.textContent = '', 2000);
-}
-
-function autoResize(ta) { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }
 
 // ═══════════════════════════════════════════════════════════
 // WELLNESS — CHECKLIST DATA
@@ -1159,6 +889,14 @@ function renderSubheading(area, sec) {
   const body = document.createElement('div'); body.className = 'osub-body' + (isOpen ? ' open' : '');
   sec.rows.forEach((r, ri) => {
     const rowEl = document.createElement('div'); rowEl.className = 'orow';
+    const toTask = document.createElement('button'); toTask.className = 'orow-totask'; toTask.title = 'Add to Tasks'; toTask.textContent = '→';
+    toTask.onclick = () => {
+      if (!r.text || !r.text.trim()) return;
+      wellnessData.tasks.push({ id: uid(), text: r.text, done: false });
+      wellDbSave(); taskRender();
+      toTask.classList.add('sent');
+      setTimeout(() => toTask.classList.remove('sent'), 600);
+    };
     const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!r.done;
     const txt = document.createElement('input'); txt.type = 'text'; txt.value = r.text; txt.placeholder = 'Row…';
     txt.className = r.done ? 'done' : '';
@@ -1167,7 +905,7 @@ function renderSubheading(area, sec) {
     txt.onchange = () => paraDbSave();
     const rm = document.createElement('button'); rm.className = 'orow-del'; rm.textContent = '×';
     rm.onclick = () => { sec.rows.splice(ri, 1); paraDbSave(); renderOutline(); };
-    rowEl.appendChild(cb); rowEl.appendChild(txt); rowEl.appendChild(rm);
+    rowEl.appendChild(toTask); rowEl.appendChild(cb); rowEl.appendChild(txt); rowEl.appendChild(rm);
     body.appendChild(rowEl);
   });
   const addRowBtn = document.createElement('button'); addRowBtn.className = 'add-row-btn'; addRowBtn.textContent = '+ Row';
@@ -1189,13 +927,6 @@ function renderSubheading(area, sec) {
 // ═══════════════════════════════════════════════════════════
 // KEYBOARD
 // ═══════════════════════════════════════════════════════════
-document.addEventListener('keydown', e => {
-  if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-    e.preventDefault();
-    if (curEntityId) saveEntityPage();
-  }
-});
-
 // ═══════════════════════════════════════════════════════════
 // START
 // ═══════════════════════════════════════════════════════════
