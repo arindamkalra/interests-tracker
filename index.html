@@ -454,21 +454,18 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: 
         <div class="focus-list" id="taskList"></div>
       </div>
 
-      <!-- Weekly Goals -->
+      <!-- Groceries -->
       <div class="focus-card">
         <div class="focus-card-stripe" style="background:linear-gradient(90deg,#9B84C4,#C4AEE8)"></div>
         <div class="focus-card-hdr">
-          <span class="focus-card-title">🌱 Weekly Goals</span>
+          <span class="focus-card-title">🛒 Groceries</span>
+          <button class="focus-clear-btn" onclick="groceryClearDone()">Clear done</button>
         </div>
-        <div class="week-prog-row">
-          <div class="week-prog-bar"><div class="week-prog-fill" id="weekProgFill" style="width:0%"></div></div>
-          <span class="week-prog-label" id="weekProgLabel">0 achieved</span>
+        <div class="focus-input-row">
+          <input class="focus-input" id="groceryInput" placeholder="Add a grocery item…" onkeydown="if(event.key==='Enter') groceryAdd()">
+          <button class="focus-add-btn" onclick="groceryAdd()">+</button>
         </div>
-        <div class="goal-input-row">
-          <input class="goal-input" id="goalInput" placeholder="Set a goal for this week…" onkeydown="if(event.key==='Enter') goalAdd()">
-          <button class="goal-add-btn" onclick="goalAdd()">+</button>
-        </div>
-        <div id="goalList"></div>
+        <div class="focus-list" id="groceryList"></div>
       </div>
 
       <div id="outlineHeadings"></div>
@@ -515,7 +512,7 @@ function switchView(view) {
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'view-' + view));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('on', b.dataset.view === view));
   if (view === 'wellness') wellRender();
-  if (view === 'outline') { renderOutline(); taskRender(); goalRender(); }
+  if (view === 'outline') { renderOutline(); taskRender(); groceryRender(); }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -542,7 +539,7 @@ async function paraDbSave() {
 // ═══════════════════════════════════════════════════════════
 // SUPABASE — WELLNESS
 // ═══════════════════════════════════════════════════════════
-let wellnessData = { checklistState: {}, tasks: [], goals: [] };
+let wellnessData = { checklistState: {}, tasks: [], groceries: [] };
 
 async function wellDbLoad() {
   const res = await fetch(`${SB_URL}/rest/v1/wellness?id=eq.main&user_id=eq.${USER_ID}`, { headers: SB_HDR });
@@ -585,13 +582,13 @@ async function boot() {
 
   const savedWell = await wellDbLoad();
   if (savedWell) {
-    wellnessData = { checklistState: savedWell.checklistState || {}, tasks: savedWell.tasks || [], goals: savedWell.goals || [] };
+    wellnessData = { checklistState: savedWell.checklistState || {}, tasks: savedWell.tasks || [], groceries: savedWell.groceries || [] };
   } else {
-    wellnessData = { checklistState: {}, tasks: [], goals: [] };
+    wellnessData = { checklistState: {}, tasks: [], groceries: [] };
     await wellDbSave();
   }
   taskRender();
-  goalRender();
+  groceryRender();
 
   sync('');
 }
@@ -754,76 +751,45 @@ function taskRender() {
 }
 
 // ═══════════════════════════════════════════════════════════
-// WEEKLY GOALS (persists in wellnessData)
+// GROCERIES (persists in wellnessData)
 // ═══════════════════════════════════════════════════════════
-function goalAdd() {
-  const inp = document.getElementById('goalInput');
+function groceryAdd() {
+  const inp = document.getElementById('groceryInput');
   const text = inp.value.trim(); if (!text) return;
-  wellnessData.goals.push({ id: uid(), text, pct: 0, achieved: false });
+  wellnessData.groceries.push({ id: uid(), text, done: false });
   inp.value = '';
-  wellDbSave(); goalRender();
+  wellDbSave(); groceryRender();
 }
 
-function goalSetPct(id, pct) {
-  const g = wellnessData.goals.find(g => g.id === id); if (!g) return;
-  g.pct = pct; g.achieved = pct >= 100;
-  wellDbSave(); goalUpdateHeader();
-  // update just the item's achieved class without full re-render
-  const el = document.getElementById('gitem-' + id); if (!el) return;
-  el.className = 'goal-item' + (g.achieved ? ' achieved' : '');
-  const icon = el.querySelector('.goal-icon'); if (icon) { icon.textContent = g.achieved ? '✓' : '◎'; }
-  const lbl = el.querySelector('.goal-pct'); if (lbl) lbl.textContent = pct + '%';
+function groceryToggle(id) {
+  const t = wellnessData.groceries.find(t => t.id === id); if (!t) return;
+  t.done = !t.done; wellDbSave(); groceryRender();
 }
 
-function goalToggle(id) {
-  const g = wellnessData.goals.find(g => g.id === id); if (!g) return;
-  const newPct = g.achieved ? 0 : 100;
-  g.pct = newPct; g.achieved = !g.achieved;
-  wellDbSave(); goalRender();
+function groceryDelete(id) {
+  wellnessData.groceries = wellnessData.groceries.filter(t => t.id !== id);
+  wellDbSave(); groceryRender();
 }
 
-function goalDelete(id) {
-  wellnessData.goals = wellnessData.goals.filter(g => g.id !== id);
-  wellDbSave(); goalRender();
+function groceryClearDone() {
+  wellnessData.groceries = wellnessData.groceries.filter(t => !t.done);
+  wellDbSave(); groceryRender();
 }
 
-function goalUpdateHeader() {
-  const goals = wellnessData.goals;
-  if (!goals.length) { document.getElementById('weekProgFill').style.width = '0%'; document.getElementById('weekProgLabel').textContent = '0 achieved'; return; }
-  const avg = Math.round(goals.reduce((s,g) => s + (g.pct||0), 0) / goals.length);
-  const achieved = goals.filter(g => g.achieved).length;
-  document.getElementById('weekProgFill').style.width = avg + '%';
-  document.getElementById('weekProgLabel').textContent = `${achieved} / ${goals.length} done · ${avg}% avg`;
-}
-
-function goalRender() {
-  const list = document.getElementById('goalList'); list.innerHTML = '';
-  if (!wellnessData.goals.length) { list.innerHTML = '<div class="goal-empty">No goals yet — what do you want to accomplish?</div>'; goalUpdateHeader(); return; }
-  goalUpdateHeader();
-  wellnessData.goals.forEach(g => {
-    const el = document.createElement('div'); el.className = 'goal-item' + (g.achieved ? ' achieved' : ''); el.id = 'gitem-' + g.id;
-    const icon = document.createElement('div'); icon.className = 'goal-icon'; icon.textContent = g.achieved ? '✓' : '◎';
-    icon.onclick = () => goalToggle(g.id);
-    const main = document.createElement('div'); main.className = 'goal-main';
-    const txt = document.createElement('div'); txt.className = 'goal-text'; txt.textContent = g.text;
-    const sliderRow = document.createElement('div'); sliderRow.className = 'goal-slider-row';
-    const slider = document.createElement('input'); slider.type = 'range'; slider.min = 0; slider.max = 100; slider.step = 5;
-    slider.value = g.pct; slider.className = 'goal-slider'; slider.id = 'gslider-' + g.id;
-    goalUpdateSliderBg(slider, g.pct);
-    const pctLbl = document.createElement('span'); pctLbl.className = 'goal-pct'; pctLbl.textContent = g.pct + '%';
-    slider.addEventListener('input', () => { pctLbl.textContent = slider.value + '%'; goalUpdateSliderBg(slider, parseInt(slider.value)); });
-    slider.addEventListener('change', () => goalSetPct(g.id, parseInt(slider.value)));
-    sliderRow.appendChild(slider); sliderRow.appendChild(pctLbl);
-    main.appendChild(txt); main.appendChild(sliderRow);
-    const del = document.createElement('button'); del.className = 'goal-del-btn'; del.textContent = '×';
-    del.onclick = () => goalDelete(g.id);
-    el.appendChild(icon); el.appendChild(main); el.appendChild(del);
+function groceryRender() {
+  const list = document.getElementById('groceryList'); list.innerHTML = '';
+  if (!wellnessData.groceries.length) { list.innerHTML = '<div class="focus-empty">No groceries yet</div>'; return; }
+  wellnessData.groceries.forEach(t => {
+    const el = document.createElement('div'); el.className = 'focus-item' + (t.done ? ' done' : '');
+    const cb = document.createElement('div'); cb.className = 'focus-cb';
+    cb.innerHTML = '<svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 3.5L3.5 6.5L9 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    cb.onclick = () => groceryToggle(t.id);
+    const txt = document.createElement('div'); txt.className = 'focus-item-text'; txt.textContent = t.text;
+    const del = document.createElement('button'); del.className = 'focus-item-del'; del.textContent = '×';
+    del.onclick = () => groceryDelete(t.id);
+    el.appendChild(cb); el.appendChild(txt); el.appendChild(del);
     list.appendChild(el);
   });
-}
-
-function goalUpdateSliderBg(slider, val) {
-  slider.style.background = `linear-gradient(90deg, #1C1C1C ${val}%, #EDE8E0 ${val}%)`;
 }
 
 
@@ -961,7 +927,7 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('/interests-t
 pomUpdateDisplay();
 boot();
 taskRender();
-goalRender();
+groceryRender();
 </script>
 </body>
 </html>
