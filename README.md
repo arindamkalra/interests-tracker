@@ -1,23 +1,39 @@
-# Interests Tracker
+# tendr
 
-A lightweight personal app to track hobbies and interests — what you want to try, what you're working on, and what you've done.
+A personal PWA to track hobbies/interests, daily wellness, and focus time — "what matters."
+
+Live at: https://arindamkalra.github.io/interests-tracker/
 
 ## Features
 
-- **Interest list** with status: Active, Up Next, Someday, Archived
-- **Next actions** per interest — check off to move to Done log with date
-- **Done log** — collapsible history of completed actions with undo
-- **Notes** — freeform notes per interest; paste a URL and it auto-moves to Resources
-- **Resources & Links** — saved separately, one per line, clickable
-- **Projects** — each interest can have sub-projects, each with their own next actions, done log, notes, and links
+**Interests**
+- Interest list with status: Active, Up Next, Someday, Archived
+- Notes saved as individual cards; pasting a URL auto-extracts it into Links (with an optional title)
+- Links & Resources list, separate from notes
+- Projects — each interest can have sub-projects with their own notes, links, and next actions
+
+**Wellness**
+- Daily checklist view, resets each day
+
+**Focus**
+- Pomodoro-style timer (short/long sessions)
+- Task list for the day
+- Weekly goals tracker
 
 ## Tech
 
-- Single HTML file, no dependencies
-- Data stored in browser `localStorage` (cross-device sync via Supabase planned)
+- Single HTML file (`index.html`), no build step, no framework
+- Installable PWA — `manifest.json` + `sw.js` service worker + app icons
+- Data persistence via Supabase (interests + wellness data); Pomodoro session state is local-only
+- Deployed via GitHub Pages from the `gh-pages` branch
+
+## Repo layout
+
+- `index.html` — the app
+- `manifest.json`, `sw.js`, `icon-192.png`, `icon-512.png`, `tendr_logo.svg` — PWA assets
+- `archive/interests-legacy.html` — the original single-interest-list prototype this app grew out of, kept for reference
 
 ## Roadmap
 
-- [ ] Supabase integration for cross-device sync
-- [ ] Mobile-friendly layout
 - [ ] Tags/categories across interests
+- [ ] Reduce the hardcoded single-user assumption (`USER_ID`) if multi-user access is ever needed
