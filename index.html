@@ -353,7 +353,6 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: 
           <div class="int-tabs" id="paraTabs">
             <button class="int-tab on" data-sec="projects" onclick="paraSwitchSection('projects')">Projects</button>
             <button class="int-tab" data-sec="areas" onclick="paraSwitchSection('areas')">Areas</button>
-            <button class="int-tab" data-sec="resources" onclick="paraSwitchSection('resources')">Resources</button>
             <button class="int-tab" data-sec="archive" onclick="paraSwitchSection('archive')">Archive</button>
           </div>
           <button class="add-int-btn" id="paraAddBtn" onclick="paraAddClick()">+ Project</button>
@@ -501,7 +500,7 @@ function switchView(view) {
 // ═══════════════════════════════════════════════════════════
 // PARA DATA MODEL
 // ═══════════════════════════════════════════════════════════
-let paraData = { projects: [], areas: [], resources: [] };
+let paraData = { projects: [], areas: [] };
 let curSection = 'projects';
 let curEntityType = null;
 let curEntityId = null;
@@ -553,14 +552,12 @@ async function boot() {
   if (saved) {
     paraData = {
       projects: saved.projects || [],
-      areas: saved.areas || [],
-      resources: saved.resources || []
+      areas: saved.areas || []
     };
   } else {
     paraData = {
       projects: [],
-      areas: ['Cooking','Baking','Embroidery','Pottery','Hiking'].map(name => ({ id: uid(), name, archived: false, blocks: [] })),
-      resources: []
+      areas: ['Cooking','Baking','Embroidery','Pottery','Hiking'].map(name => ({ id: uid(), name, archived: false, blocks: [] }))
     };
     await paraDbSave();
   }
@@ -585,10 +582,10 @@ function paraSwitchSection(sec) {
   curSection = sec;
   document.querySelectorAll('#paraTabs .int-tab').forEach(b => b.classList.toggle('on', b.dataset.sec === sec));
   const addBtn = document.getElementById('paraAddBtn');
-  const labels = { projects: '+ Project', areas: '+ Area', resources: '+ Link', archive: '' };
+  const labels = { projects: '+ Project', areas: '+ Area', archive: '' };
   addBtn.textContent = labels[sec];
   addBtn.style.display = sec === 'archive' ? 'none' : 'block';
-  const emptyMsgs = { projects: 'Select a project or add a new one', areas: 'Select an area or add a new one', resources: 'No resources yet — add one below', archive: 'Nothing archived yet' };
+  const emptyMsgs = { projects: 'Select a project or add a new one', areas: 'Select an area or add a new one', archive: 'Nothing archived yet' };
   document.getElementById('intEmptyMsg').textContent = emptyMsgs[sec];
   renderParaList();
 }
@@ -596,7 +593,6 @@ function paraSwitchSection(sec) {
 function paraAddClick() {
   if (curSection === 'projects') addProjectEntity();
   else if (curSection === 'areas') addAreaEntity();
-  else if (curSection === 'resources') addResourceRow();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -606,7 +602,6 @@ function renderParaList() {
   const list = document.getElementById('intList'); list.innerHTML = '';
   if (curSection === 'projects') renderEntityRows('projects');
   else if (curSection === 'areas') renderEntityRows('areas');
-  else if (curSection === 'resources') renderResourceRows();
   else if (curSection === 'archive') renderArchiveRows();
 }
 
@@ -618,26 +613,6 @@ function renderEntityRows(type) {
     div.innerHTML = `<span class="iname">${esc(ent.name)}</span>${areaName ? `<span class="mini-tag">${esc(areaName)}</span>` : ''}<button class="idel" onclick="deleteEntity('${type}','${ent.id}',event)">×</button>`;
     div.addEventListener('click', () => openEntityPage(type, ent.id));
     list.appendChild(div);
-  });
-}
-
-function renderResourceRows() {
-  const list = document.getElementById('intList');
-  paraData.resources.forEach((r, i) => {
-    const row = document.createElement('div'); row.className = 'link-row';
-    const isUrl = (r.url || '').startsWith('http');
-    row.innerHTML = `
-      <div class="link-inner">
-        <input class="link-title-inp" placeholder="Title" value="${esc(r.title || '')}">
-        ${isUrl ? `<a class="link-url-a" href="${esc(r.url)}" target="_blank">${esc(r.url)}</a>` : `<input class="link-url-inp" placeholder="https://…" value="${esc(r.url || '')}">`}
-      </div>
-      <button class="link-del" onclick="removeResource(${i})">×</button>
-    `;
-    const titleInp = row.querySelector('.link-title-inp');
-    titleInp.oninput = () => { r.title = titleInp.value; paraDbSave(); };
-    const urlInp = row.querySelector('.link-url-inp');
-    if (urlInp) urlInp.oninput = () => { r.url = urlInp.value; if (r.url.startsWith('http') && r.url.length > 10) { paraDbSave(); renderResourceRows(); } };
-    list.appendChild(row);
   });
 }
 
@@ -668,17 +643,6 @@ function addAreaEntity() {
   const a = { id: uid(), name: 'New area', archived: false, blocks: [] };
   paraData.areas.unshift(a); paraDbSave(); openEntityPage('areas', a.id);
   setTimeout(() => document.querySelector('.proj-title-inp')?.select(), 50);
-}
-
-function addResourceRow() {
-  paraData.resources.unshift({ id: uid(), title: '', url: '' });
-  paraDbSave(); renderResourceRows();
-  setTimeout(() => { const ins = document.querySelectorAll('#intList .link-title-inp'); if (ins.length) ins[0].focus(); }, 30);
-}
-
-function removeResource(i) {
-  paraData.resources.splice(i, 1);
-  paraDbSave(); renderResourceRows();
 }
 
 function deleteEntity(type, id, e) {
@@ -735,7 +699,8 @@ function renderEntityPage() {
   body.appendChild(blocksEl);
   renderEntityBlocks();
   const addRow = document.createElement('div'); addRow.className = 'add-block-row';
-  ['text','heading','checklist','link'].forEach(type => {
+  const blockTypes = curEntityType === 'areas' ? ['text','heading','checklist','link'] : ['text','heading','checklist'];
+  blockTypes.forEach(type => {
     const labels = { text:'✏️ Text', heading:'H Heading', checklist:'☑ Checklist', link:'🔗 Link' };
     const btn = document.createElement('button'); btn.className = 'add-block-btn';
     btn.textContent = labels[type]; btn.onclick = () => entityAddBlock(type);
