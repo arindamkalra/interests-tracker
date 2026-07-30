@@ -897,9 +897,9 @@ function renderGroupEl(group) {
 }
 
 function renderHeadingEl(area) {
-  area.sections = area.sections || [];
+  area.rows = area.rows || [];
   const isOpen = !!outlineOpenH[area.id];
-  const oh = document.createElement('div'); oh.className = 'oheading';
+  const oh = document.createElement('div'); oh.className = 'oheading'; oh.dataset.areaId = area.id;
 
   const row = document.createElement('div'); row.className = 'oheading-row';
   row.onclick = () => { outlineOpenH[area.id] = !outlineOpenH[area.id]; renderOutline(); };
@@ -920,43 +920,7 @@ function renderHeadingEl(area) {
   oh.appendChild(row);
 
   const body = document.createElement('div'); body.className = 'oheading-body' + (isOpen ? ' open' : '');
-  area.sections.forEach(sec => body.appendChild(renderSubheading(area, sec)));
-  const addSubBtn = document.createElement('button'); addSubBtn.className = 'add-sub-btn'; addSubBtn.textContent = '+ Sub-heading';
-  addSubBtn.onclick = () => {
-    area.sections.push({ id: uid(), name: 'New sub-heading', rows: [] });
-    outlineOpenH[area.id] = true;
-    paraDbSave(); renderOutline();
-  };
-  body.appendChild(addSubBtn);
-  oh.appendChild(body);
-  return oh;
-}
-
-function renderSubheading(area, sec) {
-  sec.rows = sec.rows || [];
-  const isOpen = !!outlineOpenS[sec.id];
-  const os = document.createElement('div'); os.className = 'osub'; os.dataset.secId = sec.id;
-
-  const row = document.createElement('div'); row.className = 'osub-row';
-  row.onclick = () => { outlineOpenS[sec.id] = !outlineOpenS[sec.id]; renderOutline(); };
-  const chev = document.createElement('span'); chev.className = 'ochev' + (isOpen ? ' open' : ''); chev.textContent = '▶';
-  const title = document.createElement('input'); title.className = 'osub-title'; title.value = sec.name;
-  title.placeholder = 'Sub-heading name';
-  title.onclick = e => e.stopPropagation();
-  title.oninput = () => { sec.name = title.value; };
-  title.onchange = () => paraDbSave();
-  const del = document.createElement('button'); del.className = 'osub-del'; del.textContent = '×';
-  del.onclick = e => {
-    e.stopPropagation();
-    if (!confirm('Delete this sub-heading and its rows?')) return;
-    area.sections = area.sections.filter(s => s.id !== sec.id);
-    paraDbSave(); renderOutline();
-  };
-  row.appendChild(chev); row.appendChild(title); row.appendChild(del);
-  os.appendChild(row);
-
-  const body = document.createElement('div'); body.className = 'osub-body' + (isOpen ? ' open' : '');
-  sec.rows.forEach((r, ri) => {
+  area.rows.forEach((r, ri) => {
     const rowEl = document.createElement('div'); rowEl.className = 'orow';
     const toTask = document.createElement('button'); toTask.className = 'orow-totask'; toTask.title = 'Add to Tasks'; toTask.textContent = '→';
     toTask.onclick = () => {
@@ -973,24 +937,24 @@ function renderSubheading(area, sec) {
     txt.oninput = () => { r.text = txt.value; };
     txt.onchange = () => paraDbSave();
     const rm = document.createElement('button'); rm.className = 'orow-del'; rm.textContent = '×';
-    rm.onclick = () => { sec.rows.splice(ri, 1); paraDbSave(); renderOutline(); };
+    rm.onclick = () => { area.rows.splice(ri, 1); paraDbSave(); renderOutline(); };
     rowEl.appendChild(toTask); rowEl.appendChild(cb); rowEl.appendChild(txt); rowEl.appendChild(rm);
     body.appendChild(rowEl);
   });
   const addRowBtn = document.createElement('button'); addRowBtn.className = 'add-row-btn'; addRowBtn.textContent = '+ Row';
   addRowBtn.onclick = () => {
-    sec.rows.push({ id: uid(), text: '', done: false });
-    outlineOpenS[sec.id] = true;
+    area.rows.push({ id: uid(), text: '', done: false });
+    outlineOpenH[area.id] = true;
     paraDbSave(); renderOutline();
     setTimeout(() => {
-      const scope = document.querySelector('.osub[data-sec-id="' + sec.id + '"] .osub-body');
+      const scope = document.querySelector('.oheading[data-area-id="' + area.id + '"] .oheading-body');
       const ins = scope ? scope.querySelectorAll('input[type=text]') : [];
       if (ins.length) ins[ins.length - 1].focus();
     }, 30);
   };
   body.appendChild(addRowBtn);
-  os.appendChild(body);
-  return os;
+  oh.appendChild(body);
+  return oh;
 }
 
 // ═══════════════════════════════════════════════════════════
