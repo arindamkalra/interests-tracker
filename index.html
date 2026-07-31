@@ -318,6 +318,18 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: 
 .focus-item-del { background: none; border: none; color: var(--faint); font-size: 15px; cursor: pointer; padding: 0 2px; transition: color 0.15s; flex-shrink: 0; }
 .focus-item-del:hover { color: #c0392b; }
 .focus-empty { text-align: center; padding: 14px; font-size: 11.5px; color: var(--faint); font-style: italic; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.tasksub-wrap { border-top: 1px solid var(--border); }
+.tasksub { border-bottom: 1px solid var(--border-light); }
+.tasksub:last-child { border-bottom: none; }
+.tasksub-hdr { display: flex; align-items: center; justify-content: space-between; padding: 9px 14px 7px; background: var(--border-light); }
+.tasksub-title { font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); }
+.tasksub-add { background: none; border: none; color: var(--accent); font-size: 18px; line-height: 1; cursor: pointer; padding: 0 4px; }
+.tasksub-add:hover { color: var(--accent-hover); }
+.tasksub-list { padding: 2px 0; }
+.tasksub-empty { padding: 10px 14px; font-size: 11.5px; color: var(--faint); font-style: italic; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.tasksub-input-row { padding: 7px 12px; }
+.tasksub-input { width: 100%; box-sizing: border-box; border: 1.5px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 13px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: var(--ink); background: var(--bg); outline: none; }
+.tasksub-input:focus { border-color: var(--muted); }
 
 /* weekly goals */
 .goal-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--border-light); }
@@ -452,20 +464,29 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: 
           <button class="focus-add-btn" onclick="taskAdd()">+</button>
         </div>
         <div class="focus-list" id="taskList"></div>
-      </div>
-
-      <!-- Groceries -->
-      <div class="focus-card">
-        <div class="focus-card-stripe" style="background:linear-gradient(90deg,#9B84C4,#C4AEE8)"></div>
-        <div class="focus-card-hdr">
-          <span class="focus-card-title">🛒 Groceries</span>
-          <button class="focus-clear-btn" onclick="groceryClearDone()">Clear done</button>
+        <div class="tasksub-wrap">
+          <div class="tasksub">
+            <div class="tasksub-hdr">
+              <span class="tasksub-title">Veggies</span>
+              <button class="tasksub-add" onclick="taskSubAddPrompt('veggies')">+</button>
+            </div>
+            <div class="tasksub-list" id="tasksubList-veggies"></div>
+          </div>
+          <div class="tasksub">
+            <div class="tasksub-hdr">
+              <span class="tasksub-title">Groceries</span>
+              <button class="tasksub-add" onclick="taskSubAddPrompt('groceries')">+</button>
+            </div>
+            <div class="tasksub-list" id="tasksubList-groceries"></div>
+          </div>
+          <div class="tasksub">
+            <div class="tasksub-hdr">
+              <span class="tasksub-title">Urgent</span>
+              <button class="tasksub-add" onclick="taskSubAddPrompt('urgent')">+</button>
+            </div>
+            <div class="tasksub-list" id="tasksubList-urgent"></div>
+          </div>
         </div>
-        <div class="focus-input-row">
-          <input class="focus-input" id="groceryInput" placeholder="Add a grocery item…" onkeydown="if(event.key==='Enter') groceryAdd()">
-          <button class="focus-add-btn" onclick="groceryAdd()">+</button>
-        </div>
-        <div class="focus-list" id="groceryList"></div>
       </div>
 
       <div id="outlineHeadings"></div>
@@ -512,7 +533,7 @@ function switchView(view) {
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'view-' + view));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('on', b.dataset.view === view));
   if (view === 'wellness') wellRender();
-  if (view === 'outline') { renderOutline(); taskRender(); groceryRender(); }
+  if (view === 'outline') { renderOutline(); taskRender(); taskSubRenderAll(); }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -539,7 +560,7 @@ async function paraDbSave() {
 // ═══════════════════════════════════════════════════════════
 // SUPABASE — WELLNESS
 // ═══════════════════════════════════════════════════════════
-let wellnessData = { checklistState: {}, tasks: [], groceries: [] };
+let wellnessData = { checklistState: {}, tasks: [], lists: { veggies: [], groceries: [], urgent: [] } };
 
 async function wellDbLoad() {
   const res = await fetch(`${SB_URL}/rest/v1/wellness?id=eq.main&user_id=eq.${USER_ID}`, { headers: SB_HDR });
@@ -582,13 +603,13 @@ async function boot() {
 
   const savedWell = await wellDbLoad();
   if (savedWell) {
-    wellnessData = { checklistState: savedWell.checklistState || {}, tasks: savedWell.tasks || [], groceries: savedWell.groceries || [] };
+    wellnessData = { checklistState: savedWell.checklistState || {}, tasks: savedWell.tasks || [], lists: ensureLists(savedWell.lists) };
   } else {
-    wellnessData = { checklistState: {}, tasks: [], groceries: [] };
+    wellnessData = { checklistState: {}, tasks: [], lists: ensureLists() };
     await wellDbSave();
   }
   taskRender();
-  groceryRender();
+  taskSubRenderAll();
 
   sync('');
 }
@@ -751,45 +772,72 @@ function taskRender() {
 }
 
 // ═══════════════════════════════════════════════════════════
-// GROCERIES (persists in wellnessData)
+// TASK SUB-LISTS: Veggies / Groceries / Urgent (persist in wellnessData.lists)
 // ═══════════════════════════════════════════════════════════
-function groceryAdd() {
-  const inp = document.getElementById('groceryInput');
-  const text = inp.value.trim(); if (!text) return;
-  wellnessData.groceries.push({ id: uid(), text, done: false });
-  inp.value = '';
-  wellDbSave(); groceryRender();
+const TASK_SUBLISTS = ['veggies', 'groceries', 'urgent'];
+
+function ensureLists(l) {
+  l = l || {};
+  return { veggies: l.veggies || [], groceries: l.groceries || [], urgent: l.urgent || [] };
 }
 
-function groceryToggle(id) {
-  const t = wellnessData.groceries.find(t => t.id === id); if (!t) return;
-  t.done = !t.done; wellDbSave(); groceryRender();
+function taskSubAdd(key, text) {
+  if (!text || !text.trim()) return;
+  wellnessData.lists[key].push({ id: uid(), text: text.trim(), done: false });
+  wellDbSave(); taskSubRender(key);
 }
 
-function groceryDelete(id) {
-  wellnessData.groceries = wellnessData.groceries.filter(t => t.id !== id);
-  wellDbSave(); groceryRender();
+function taskSubToggle(key, id) {
+  const it = wellnessData.lists[key].find(i => i.id === id); if (!it) return;
+  it.done = !it.done; wellDbSave(); taskSubRender(key);
 }
 
-function groceryClearDone() {
-  wellnessData.groceries = wellnessData.groceries.filter(t => !t.done);
-  wellDbSave(); groceryRender();
+function taskSubDelete(key, id) {
+  wellnessData.lists[key] = wellnessData.lists[key].filter(i => i.id !== id);
+  wellDbSave(); taskSubRender(key);
 }
 
-function groceryRender() {
-  const list = document.getElementById('groceryList'); list.innerHTML = '';
-  if (!wellnessData.groceries.length) { list.innerHTML = '<div class="focus-empty">No groceries yet</div>'; return; }
-  wellnessData.groceries.forEach(t => {
-    const el = document.createElement('div'); el.className = 'focus-item' + (t.done ? ' done' : '');
+function taskSubAddPrompt(key) {
+  const list = document.getElementById('tasksubList-' + key); if (!list) return;
+  const existingInput = list.querySelector('.tasksub-input'); if (existingInput) { existingInput.focus(); return; }
+  const empty = list.querySelector('.tasksub-empty'); if (empty) empty.remove();
+  const row = document.createElement('div'); row.className = 'tasksub-input-row';
+  const inp = document.createElement('input'); inp.type = 'text'; inp.className = 'tasksub-input'; inp.placeholder = 'Add item…';
+  const commit = () => {
+    const val = inp.value.trim();
+    row.remove();
+    if (val) taskSubAdd(key, val); else taskSubRender(key);
+  };
+  inp.onkeydown = (e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') { row.remove(); taskSubRender(key); } };
+  inp.onblur = commit;
+  row.appendChild(inp);
+  list.appendChild(row);
+  setTimeout(() => inp.focus(), 20);
+}
+
+function taskSubRender(key) {
+  const list = document.getElementById('tasksubList-' + key); if (!list) return;
+  list.innerHTML = '';
+  const items = wellnessData.lists[key] || [];
+  items.forEach(it => {
+    const el = document.createElement('div'); el.className = 'focus-item' + (it.done ? ' done' : '');
     const cb = document.createElement('div'); cb.className = 'focus-cb';
     cb.innerHTML = '<svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 3.5L3.5 6.5L9 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-    cb.onclick = () => groceryToggle(t.id);
-    const txt = document.createElement('div'); txt.className = 'focus-item-text'; txt.textContent = t.text;
+    cb.onclick = () => taskSubToggle(key, it.id);
+    const txt = document.createElement('div'); txt.className = 'focus-item-text'; txt.textContent = it.text;
     const del = document.createElement('button'); del.className = 'focus-item-del'; del.textContent = '×';
-    del.onclick = () => groceryDelete(t.id);
+    del.onclick = () => taskSubDelete(key, it.id);
     el.appendChild(cb); el.appendChild(txt); el.appendChild(del);
     list.appendChild(el);
   });
+  if (!items.length) {
+    const emptyEl = document.createElement('div'); emptyEl.className = 'tasksub-empty'; emptyEl.textContent = 'No items yet';
+    list.appendChild(emptyEl);
+  }
+}
+
+function taskSubRenderAll() {
+  TASK_SUBLISTS.forEach(taskSubRender);
 }
 
 
@@ -927,7 +975,7 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('/interests-t
 pomUpdateDisplay();
 boot();
 taskRender();
-groceryRender();
+taskSubRenderAll();
 </script>
 </body>
 </html>
