@@ -224,16 +224,16 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: 
 .osub-row:hover .osub-del { opacity: 1; }
 .osub-body { display: none; padding: 8px 10px 10px; }
 .osub-body.open { display: block; }
-.orow { display: flex; align-items: center; gap: 8px; padding: 4px 2px; }
-.orow-cb { width: 17px; height: 17px; border-radius: 5px; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.18s; background: var(--surface); }
+.orow { display: flex; align-items: flex-start; gap: 8px; padding: 5px 2px; }
+.orow-cb { width: 17px; height: 17px; border-radius: 5px; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.18s; background: var(--surface); margin-top: 2px; }
 .orow-cb.checked { background: var(--ink); border-color: var(--ink); }
 .orow-cb svg { opacity: 0; transform: scale(0.4); transition: all 0.2s; }
 .orow-cb.checked svg { opacity: 1; transform: scale(1); }
-.orow input[type=text] { flex: 1; border: none; background: none; outline: none; font-size: 13px; color: var(--ink); font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
-.orow input[type=text].done { text-decoration: line-through; color: var(--muted); }
-.orow-del { background: none; border: none; color: var(--faint); font-size: 14px; cursor: pointer; opacity: 0; padding: 0; flex-shrink: 0; }
+.orow-text { flex: 1; border: none; background: none; outline: none; font-size: 13px; color: var(--ink); font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; resize: none; overflow: hidden; line-height: 1.4; padding: 2px 0; white-space: pre-wrap; word-break: break-word; height: auto; }
+.orow-text.done { text-decoration: line-through; color: var(--muted); }
+.orow-del { background: none; border: none; color: var(--faint); font-size: 14px; cursor: pointer; opacity: 0; padding: 0; flex-shrink: 0; margin-top: 3px; }
 .orow:hover .orow-del { opacity: 1; }
-.orow-totask { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 6px; font-size: 12px; cursor: pointer; padding: 2px 7px; flex-shrink: 0; line-height: 1.4; }
+.orow-totask { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 6px; font-size: 12px; cursor: pointer; padding: 2px 7px; flex-shrink: 0; line-height: 1.4; margin-top: 1px; }
 .orow-totask:hover { border-color: var(--muted); color: var(--ink); }
 .orow-totask.sent { background: var(--check-bg); color: var(--check); border-color: var(--check); }
 .add-sub-btn, .add-row-btn { background: none; border: 1px dashed var(--border); border-radius: 7px; color: var(--faint); font-size: 12px; cursor: pointer; padding: 6px 12px; margin-top: 8px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
@@ -387,7 +387,7 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: 
   .app-title { font-size: 17px; }
   .oheading-title { font-size: 17px; }
   .osub-title { font-size: 15px; }
-  .orow input[type=text] { font-size: 15px; }
+  .orow-text { font-size: 15px; }
   .idel, .oheading-del, .osub-del, .orow-del, .ogroup-del { opacity: 1 !important; }
   .ogroup-title { font-size: 18px; }
   .nav-btn .nlabel { font-size: 11px; }
@@ -871,7 +871,18 @@ function renderOutline() {
     paraDbSave(); renderOutline();
   };
   wrap.appendChild(addGroupBtn);
+
+  document.querySelectorAll('.orow-text').forEach(autoGrowTextarea);
 }
+
+function autoGrowTextarea(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+window.addEventListener('resize', () => {
+  document.querySelectorAll('.orow-text').forEach(autoGrowTextarea);
+});
 
 function renderGroupEl(group, idx) {
   const color = GROUP_COLORS[idx % GROUP_COLORS.length];
@@ -940,10 +951,10 @@ function renderHeadingEl(area) {
     };
     const cb = document.createElement('div'); cb.className = 'orow-cb' + (r.done ? ' checked' : '');
     cb.innerHTML = '<svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 3.5L3.5 6.5L9 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-    const txt = document.createElement('input'); txt.type = 'text'; txt.value = r.text; txt.placeholder = 'Row…';
-    txt.className = r.done ? 'done' : '';
-    cb.onclick = () => { r.done = !r.done; cb.classList.toggle('checked', r.done); txt.className = r.done ? 'done' : ''; paraDbSave(); };
-    txt.oninput = () => { r.text = txt.value; };
+    const txt = document.createElement('textarea'); txt.rows = 1; txt.value = r.text; txt.placeholder = 'Row…';
+    txt.className = 'orow-text' + (r.done ? ' done' : '');
+    cb.onclick = () => { r.done = !r.done; cb.classList.toggle('checked', r.done); txt.className = 'orow-text' + (r.done ? ' done' : ''); paraDbSave(); };
+    txt.oninput = () => { r.text = txt.value; autoGrowTextarea(txt); };
     txt.onchange = () => paraDbSave();
     const rm = document.createElement('button'); rm.className = 'orow-del'; rm.textContent = '×';
     rm.onclick = () => { area.rows.splice(ri, 1); paraDbSave(); renderOutline(); };
@@ -956,7 +967,7 @@ function renderHeadingEl(area) {
     paraDbSave(); renderOutline();
     setTimeout(() => {
       const scope = document.querySelector('.oheading[data-area-id="' + area.id + '"] .oheading-body');
-      const ins = scope ? scope.querySelectorAll('input[type=text]') : [];
+      const ins = scope ? scope.querySelectorAll('textarea.orow-text') : [];
       if (ins.length) ins[ins.length - 1].focus();
     }, 30);
   };
